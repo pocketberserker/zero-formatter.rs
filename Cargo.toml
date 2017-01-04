@@ -1,0 +1,7 @@
+[package]
+name = "zeroformatter"
+version = "0.0.1"
+authors = ["pocketberserker <pocketberserker@gmail.com>"]
+
+[dependencies]
+byteorder = "1.0"
