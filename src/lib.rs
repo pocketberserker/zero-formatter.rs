@@ -1,150 +1,118 @@
-
 extern crate byteorder;
 
-use std::io::{Result, Seek, Cursor};
+use std::{i32, usize};
+use std::borrow::Cow;
+use std::ops::Deref;
+use std::string::String;
+//use std::convert::TryFrom;
+use std::io::{Seek, SeekFrom};
 use byteorder::{ReadBytesExt, WriteBytesExt, LittleEndian};
+
+type Result<T> = std::result::Result<T, Box<std::error::Error>>;
 
 pub trait Formatter<T>: Seek + ReadBytesExt + WriteBytesExt {
 
     fn len() -> Option<i32> { None }
-    fn serialize(&mut self, offset: u64, value: T) -> Result<i32>;
-    fn deserialize(&mut self, offset: &mut u64) -> Result<T>;
+    fn serialize(&mut self, offset: i64, value: T) -> Result<i32>;
+    fn deserialize(&mut self, offset: &mut i64) -> Result<T>;
 }
 
-impl<R: Seek + ReadBytesExt + WriteBytesExt + ?Sized> Formatter<u8> for R {
+impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<u8> for R {
     fn len() -> Option<i32> { Some(1) }
 
-    fn serialize(&mut self, offset: u64, value: u8) -> Result<i32> {
-        self.write_u8(value)
-            .map(|_| 1)
+    fn serialize(&mut self, offset: i64, value: u8) -> Result<i32> {
+        try!(self.seek(SeekFrom::Current(offset)));
+        try!(self.write_u8(value));
+        Ok(1)
     }
 
-    fn deserialize(&mut self, offset: &mut u64) -> Result<u8> {
-        self.read_u8()
-    }
-}
-
-impl<R: Seek + ReadBytesExt + WriteBytesExt + ?Sized> Formatter<u16> for R {
-    fn len() -> Option<i32> { Some(2) }
-
-    fn serialize(&mut self, offset: u64, value: u16) -> Result<i32> {
-        self.write_u16::<LittleEndian>(value)
-            .map(|_| 2)
-    }
-
-    fn deserialize(&mut self, offset: &mut u64) -> Result<u16> {
-        self.read_u16::<LittleEndian>()
+    fn deserialize(&mut self, offset: &mut i64) -> Result<u8> {
+        try!(self.seek(SeekFrom::Current(*(offset as &i64))));
+        let n = try!(self.read_u8());
+        Ok(n)
     }
 }
 
-impl<R: Seek + ReadBytesExt + WriteBytesExt + ?Sized> Formatter<u32> for R {
-    fn len() -> Option<i32> { Some(4) }
-
-    fn serialize(&mut self, offset: u64, value: u32) -> Result<i32> {
-        self.write_u32::<LittleEndian>(value)
-            .map(|_| 4)
-    }
-
-    fn deserialize(&mut self, offset: &mut u64) -> Result<u32> {
-        self.read_u32::<LittleEndian>()
-    }
-}
-
-impl<R: Seek + ReadBytesExt + WriteBytesExt + ?Sized> Formatter<u64> for R {
-    fn len() -> Option<i32> { Some(8) }
-
-    fn serialize(&mut self, offset: u64, value: u64) -> Result<i32> {
-        self.write_u64::<LittleEndian>(value)
-            .map(|_| 8)
-    }
-
-    fn deserialize(&mut self, offset: &mut u64) -> Result<u64> {
-        self.read_u64::<LittleEndian>()
-    }
-}
-
-impl<R: Seek + ReadBytesExt + WriteBytesExt + ?Sized> Formatter<i8> for R {
+impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<i8> for R {
     fn len() -> Option<i32> { Some(1) }
 
-    fn serialize(&mut self, offset: u64, value: i8) -> Result<i32> {
-        self.write_i8(value)
-            .map(|_| 1)
+    fn serialize(&mut self, offset: i64, value: i8) -> Result<i32> {
+        try!(self.seek(SeekFrom::Current(offset)));
+        try!(self.write_i8(value));
+        Ok(1)
     }
 
-    fn deserialize(&mut self, offset: &mut u64) -> Result<i8> {
-        self.read_i8()
-    }
-}
-
-impl<R: Seek + ReadBytesExt + WriteBytesExt + ?Sized> Formatter<i16> for R {
-    fn len() -> Option<i32> { Some(8) }
-
-    fn serialize(&mut self, offset: u64, value: i16) -> Result<i32> {
-        self.write_i16::<LittleEndian>(value)
-            .map(|_| 2)
-    }
-
-    fn deserialize(&mut self, offset: &mut u64) -> Result<i16> {
-        self.read_i16::<LittleEndian>()
+    fn deserialize(&mut self, offset: &mut i64) -> Result<i8> {
+        try!(self.seek(SeekFrom::Current(*(offset as &i64))));
+        let n = try!(self.read_i8());
+        Ok(n)
     }
 }
 
-impl<R: Seek + ReadBytesExt + WriteBytesExt + ?Sized> Formatter<i32> for R {
-    fn len() -> Option<i32> { Some(8) }
+macro_rules! primitive_formatter_impl {
+    ($($t:ty; $w:tt; $r:tt; $l:expr),*) => ($(
+        impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<$t> for R {
 
-    fn serialize(&mut self, offset: u64, value: i32) -> Result<i32> {
-        self.write_i32::<LittleEndian>(value)
-            .map(|_| 4)
-    }
+            fn len() -> Option<i32> { Some($l) }
 
-    fn deserialize(&mut self, offset: &mut u64) -> Result<i32> {
-        self.read_i32::<LittleEndian>()
-    }
+            fn serialize(&mut self, offset: i64, value: $t) -> Result<i32> {
+                try!(self.seek(SeekFrom::Current(offset)));
+                try!(self.$w::<LittleEndian>(value));
+                Ok($l)
+            }
+
+            fn deserialize(&mut self, offset: &mut i64) -> Result<$t> {
+                try!(self.seek(SeekFrom::Current(*(offset as &i64))));
+                let n = try!(self.$r::<LittleEndian>());
+                Ok(n)
+            }
+        }
+     )*)
 }
 
-impl<R: Seek + ReadBytesExt + WriteBytesExt + ?Sized> Formatter<i64> for R {
-    fn len() -> Option<i32> { Some(8) }
-
-    fn serialize(&mut self, offset: u64, value: i64) -> Result<i32> {
-        self.write_i64::<LittleEndian>(value)
-            .map(|_| 8)
-    }
-
-    fn deserialize(&mut self, offset: &mut u64) -> Result<i64> {
-        self.read_i64::<LittleEndian>()
-    }
+primitive_formatter_impl! {
+    u16; write_u16; read_u16; 2,
+    u32; write_u32; read_u32; 4,
+    u64; write_u64; read_u64; 8,
+    i16; write_i16; read_i16; 2,
+    i32; write_i32; read_i32; 4,
+    i64; write_i64; read_i64; 8,
+    f32; write_f32; read_f32; 4,
+    f64; write_f64; read_f64; 8
 }
 
-impl<R: Seek + ReadBytesExt + WriteBytesExt + ?Sized> Formatter<f32> for R {
-    fn len() -> Option<i32> { Some(4) }
+impl<'a, R: Seek + ReadBytesExt + WriteBytesExt> Formatter<Cow<'a, str>> for R {
 
-    fn serialize(&mut self, offset: u64, value: f32) -> Result<i32> {
-        self.write_f32::<LittleEndian>(value)
-            .map(|_| 4)
+    fn serialize(&mut self, offset: i64, value: Cow<'a, str>) -> Result<i32> {
+        let bytes = value.deref().as_bytes();
+        let l = bytes.len();
+        //let i = try!(i32::try_from(l));
+        let i = l as i32;
+        try!(self.seek(SeekFrom::Current(offset)));
+        try!(self.write_i32::<LittleEndian>(i));
+        try!(self.write(bytes));
+        Ok(i + 4)
     }
 
-    fn deserialize(&mut self, offset: &mut u64) -> Result<f32> {
-        self.read_f32::<LittleEndian>()
-    }
-}
-
-impl<R: Seek + ReadBytesExt + WriteBytesExt + ?Sized> Formatter<f64> for R {
-    fn len() -> Option<i32> { Some(8) }
-
-    fn serialize(&mut self, offset: u64, value: f64) -> Result<i32> {
-        self.write_f64::<LittleEndian>(value)
-            .map(|_| 8)
-    }
-
-    fn deserialize(&mut self, offset: &mut u64) -> Result<f64> {
-        self.read_f64::<LittleEndian>()
+    fn deserialize(&mut self, offset: &mut i64) -> Result<Cow<'a, str>> {
+        try!(self.seek(SeekFrom::Current(*(offset as &i64))));
+        let i = try!(self.read_i32::<LittleEndian>());
+        //let l = try!(usize::try_from(i));
+        let l = i as usize;
+        let mut buf = Vec::with_capacity(l);
+        unsafe { buf.set_len(l); }
+        try!(self.read(&mut buf));
+        *offset += 4 + l as i64;
+        let s = try!(String::from_utf8(buf));
+        Ok(s.into())
     }
 }
 
 #[cfg(test)]
 mod tests {
 
-    use std::io::{Cursor};
+    use std::borrow::Cow;
+    use std::io::Cursor;
     use Formatter;
 
     #[test]
@@ -285,5 +253,21 @@ mod tests {
         let mut rdr = Cursor::new(vec![0, 0, 0, 0, 0, 0xc0, 0x5e, 0x40]);
         let mut offset = 0;
         assert_eq!(123.0f64, rdr.deserialize(&mut offset).unwrap());
+    }
+
+    #[test]
+    fn serialize_str() {
+        let mut wtr = Cursor::new(Vec::new());
+        assert_eq!(wtr.serialize(0, Cow::Borrowed("あいうえお")).unwrap(), 19);
+        assert_eq!(wtr.into_inner(), vec![0x0f, 0, 0, 0, 0xe3, 0x81, 0x82, 0xe3, 0x81, 0x84, 0xe3, 0x81, 0x86, 0xe3, 0x81, 0x88, 0xe3, 0x81, 0x8a]);
+    }
+
+    #[test]
+    fn deserialize_str() {
+        let mut rdr = Cursor::new(vec![0x0f, 0, 0, 0, 0xe3, 0x81, 0x82, 0xe3, 0x81, 0x84, 0xe3, 0x81, 0x86, 0xe3, 0x81, 0x88, 0xe3, 0x81, 0x8a]);
+        let mut offset = 0;
+        let actual: Cow<'static, str> = rdr.deserialize(&mut offset).unwrap();
+        assert_eq!(offset, 19);
+        assert_eq!(Cow::Borrowed("あいうえお"), actual);
     }
 }
