@@ -11,14 +11,11 @@ use byteorder::{ReadBytesExt, WriteBytesExt, LittleEndian};
 type Result<T> = std::result::Result<T, Box<std::error::Error>>;
 
 pub trait Formatter<T>: Seek + ReadBytesExt + WriteBytesExt {
-
-    fn len() -> Option<i32> { None }
     fn serialize(&mut self, offset: i64, value: T) -> Result<i32>;
     fn deserialize(&mut self, offset: &mut i64) -> Result<T>;
 }
 
 impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<u8> for R {
-    fn len() -> Option<i32> { Some(1) }
 
     fn serialize(&mut self, offset: i64, value: u8) -> Result<i32> {
         try!(self.seek(SeekFrom::Current(offset)));
@@ -34,7 +31,6 @@ impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<u8> for R {
 }
 
 impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<i8> for R {
-    fn len() -> Option<i32> { Some(1) }
 
     fn serialize(&mut self, offset: i64, value: i8) -> Result<i32> {
         try!(self.seek(SeekFrom::Current(offset)));
@@ -52,8 +48,6 @@ impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<i8> for R {
 macro_rules! primitive_formatter_impl {
     ($($t:ty; $w:tt; $r:tt; $l:expr),*) => ($(
         impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<$t> for R {
-
-            fn len() -> Option<i32> { Some($l) }
 
             fn serialize(&mut self, offset: i64, value: $t) -> Result<i32> {
                 try!(self.seek(SeekFrom::Current(offset)));
