@@ -30,6 +30,21 @@ impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<u8> for R {
     }
 }
 
+impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<bool> for R {
+
+    fn serialize(&mut self, offset: i64, value: bool) -> Result<i32> {
+        let i: u8 = if value { 1 } else { 0 };
+        try!(self.seek(SeekFrom::Current(offset)));
+        self.serialize(offset, i)
+    }
+
+    fn deserialize(&mut self, offset: &mut i64) -> Result<bool> {
+        try!(self.seek(SeekFrom::Current(*(offset as &i64))));
+        let n: u8 = try!(self.deserialize(offset));
+        Ok(if n == 1 { true } else { false })
+    }
+}
+
 impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<i8> for R {
 
     fn serialize(&mut self, offset: i64, value: i8) -> Result<i32> {
@@ -41,6 +56,7 @@ impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<i8> for R {
     fn deserialize(&mut self, offset: &mut i64) -> Result<i8> {
         try!(self.seek(SeekFrom::Current(*(offset as &i64))));
         let n = try!(self.read_i8());
+        *offset += 1;
         Ok(n)
     }
 }
@@ -58,10 +74,11 @@ macro_rules! primitive_formatter_impl {
             fn deserialize(&mut self, offset: &mut i64) -> Result<$t> {
                 try!(self.seek(SeekFrom::Current(*(offset as &i64))));
                 let n = try!(self.$r::<LittleEndian>());
+                *offset += $l;
                 Ok(n)
             }
         }
-     )*)
+    )*)
 }
 
 primitive_formatter_impl! {
@@ -90,17 +107,51 @@ impl<'a, R: Seek + ReadBytesExt + WriteBytesExt> Formatter<Cow<'a, str>> for R {
 
     fn deserialize(&mut self, offset: &mut i64) -> Result<Cow<'a, str>> {
         try!(self.seek(SeekFrom::Current(*(offset as &i64))));
-        let i = try!(self.read_i32::<LittleEndian>());
+        let i: i32 = try!(self.deserialize(offset));
         //let l = try!(usize::try_from(i));
         let l = i as usize;
         let mut buf = Vec::with_capacity(l);
         unsafe { buf.set_len(l); }
         try!(self.read(&mut buf));
-        *offset += 4 + l as i64;
+        *offset += l as i64;
         let s = try!(String::from_utf8(buf));
         Ok(s.into())
     }
 }
+
+macro_rules! has_value_formatter_impl {
+    ($($t:ty)*) => ($(
+        impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<Option<$t>> for R {
+
+            fn serialize(&mut self, offset: i64, value: Option<$t>) -> Result<i32> {
+                try!(self.seek(SeekFrom::Current(offset)));
+                match value {
+                    None => {
+                        self.serialize(offset, false)
+                    },
+                    Some(v) => {
+                        let r1 = try!(self.serialize(offset, true));
+                        let r2 = try!(self.serialize(offset, v));
+                        Ok(r1 + r2)
+                    }
+                }
+            }
+
+            fn deserialize(&mut self, offset: &mut i64) -> Result<Option<$t>> {
+                try!(self.seek(SeekFrom::Current(*(offset as &i64))));
+                let has_value: bool = try!(self.deserialize(offset));
+                if has_value {
+                    self.deserialize(offset).map(|v| Some(v))
+                }
+                else {
+                    Ok(None)
+                }
+            }
+        }
+    )*)
+}
+
+has_value_formatter_impl! { u8 u16 u32 u64 i8 i16 i32 i64 f32 f64 bool }
 
 #[cfg(test)]
 mod tests {
@@ -108,6 +159,20 @@ mod tests {
     use std::borrow::Cow;
     use std::io::Cursor;
     use Formatter;
+
+    #[test]
+    fn serialize_bool() {
+        let mut wtr = Cursor::new(Vec::new());
+        assert_eq!(wtr.serialize(0, true).unwrap(), 1);
+        assert_eq!(wtr.into_inner(), vec![1]);
+    }
+
+    #[test]
+    fn deserialize_bool() {
+        let mut rdr = Cursor::new(vec![1]);
+        let mut offset = 0;
+        assert_eq!(true, rdr.deserialize(&mut offset).unwrap());
+    }
 
     #[test]
     fn serialize_u8() {
@@ -263,5 +328,19 @@ mod tests {
         let actual: Cow<'static, str> = rdr.deserialize(&mut offset).unwrap();
         assert_eq!(offset, 19);
         assert_eq!(Cow::Borrowed("あいうえお"), actual);
+    }
+
+    #[test]
+    fn serialize_option_u8() {
+        let mut wtr = Cursor::new(Vec::new());
+        assert_eq!(wtr.serialize(0, Some(1u8)).unwrap(), 2);
+        assert_eq!(wtr.into_inner(), vec![1, 1]);
+    }
+
+    #[test]
+    fn deserialize_option_u8() {
+        let mut rdr = Cursor::new(vec![1, 1]);
+        let mut offset = 0;
+        assert_eq!(Some(1u8), rdr.deserialize(&mut offset).unwrap());
     }
 }
