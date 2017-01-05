@@ -149,141 +149,141 @@ mod tests {
 
     #[test]
     fn serialize_u8() {
-      let mut wtr = Cursor::new(Vec::new());
-      assert_eq!(wtr.serialize(0, 1u8).unwrap(), 1);
-      assert_eq!(wtr.into_inner(), vec![1]);
+        let mut wtr = Cursor::new(Vec::new());
+        assert_eq!(wtr.serialize(0, 1u8).unwrap(), 1);
+        assert_eq!(wtr.into_inner(), vec![1]);
     }
 
     #[test]
     fn deserialize_u8() {
-      let mut rdr = Cursor::new(vec![1]);
-      let mut offset = 0;
-      assert_eq!(1u8, rdr.deserialize(&mut offset).unwrap());
+        let mut rdr = Cursor::new(vec![1]);
+        let mut offset = 0;
+        assert_eq!(1u8, rdr.deserialize(&mut offset).unwrap());
     }
 
     #[test]
     fn serialize_u16() {
-      let mut wtr = Cursor::new(Vec::new());
-      assert_eq!(wtr.serialize(0, 1u16).unwrap(), 2);
-      assert_eq!(wtr.into_inner(), vec![1, 0]);
+        let mut wtr = Cursor::new(Vec::new());
+        assert_eq!(wtr.serialize(0, 1u16).unwrap(), 2);
+        assert_eq!(wtr.into_inner(), vec![1, 0]);
     }
 
     #[test]
     fn deserialize_u16() {
-      let mut rdr = Cursor::new(vec![1, 0]);
-      let mut offset = 0;
-      assert_eq!(1u16, rdr.deserialize(&mut offset).unwrap());
+        let mut rdr = Cursor::new(vec![1, 0]);
+        let mut offset = 0;
+        assert_eq!(1u16, rdr.deserialize(&mut offset).unwrap());
     }
 
     #[test]
     fn serialize_u32() {
-      let mut wtr = Cursor::new(Vec::new());
-      assert_eq!(wtr.serialize(0, 1u32).unwrap(), 4);
-      assert_eq!(wtr.into_inner(), vec![1, 0, 0, 0]);
+        let mut wtr = Cursor::new(Vec::new());
+        assert_eq!(wtr.serialize(0, 1u32).unwrap(), 4);
+        assert_eq!(wtr.into_inner(), vec![1, 0, 0, 0]);
     }
 
     #[test]
     fn deserialize_u32() {
-      let mut rdr = Cursor::new(vec![1, 0, 0, 0]);
-      let mut offset = 0;
-      assert_eq!(1u32, rdr.deserialize(&mut offset).unwrap());
+        let mut rdr = Cursor::new(vec![1, 0, 0, 0]);
+        let mut offset = 0;
+        assert_eq!(1u32, rdr.deserialize(&mut offset).unwrap());
     }
 
     #[test]
     fn serialize_u64() {
-      let mut wtr = Cursor::new(Vec::new());
-      assert_eq!(wtr.serialize(0, 1u64).unwrap(), 8);
-      assert_eq!(wtr.into_inner(), vec![1, 0, 0, 0, 0, 0, 0, 0]);
+        let mut wtr = Cursor::new(Vec::new());
+        assert_eq!(wtr.serialize(0, 1u64).unwrap(), 8);
+        assert_eq!(wtr.into_inner(), vec![1, 0, 0, 0, 0, 0, 0, 0]);
     }
 
     #[test]
     fn deserialize_u64() {
-      let mut rdr = Cursor::new(vec![1, 0, 0, 0, 0, 0, 0, 0]);
-      let mut offset = 0;
-      assert_eq!(1u64, rdr.deserialize(&mut offset).unwrap());
+        let mut rdr = Cursor::new(vec![1, 0, 0, 0, 0, 0, 0, 0]);
+        let mut offset = 0;
+        assert_eq!(1u64, rdr.deserialize(&mut offset).unwrap());
     }
 
     #[test]
     fn serialize_i8() {
-      let mut wtr = Cursor::new(Vec::new());
-      assert_eq!(wtr.serialize(0, 1i8).unwrap(), 1);
-      assert_eq!(wtr.into_inner(), vec![1]);
+        let mut wtr = Cursor::new(Vec::new());
+        assert_eq!(wtr.serialize(0, 1i8).unwrap(), 1);
+        assert_eq!(wtr.into_inner(), vec![1]);
     }
 
     #[test]
     fn deserialize_i8() {
-      let mut rdr = Cursor::new(vec![1]);
-      let mut offset = 0;
-      assert_eq!(1i8, rdr.deserialize(&mut offset).unwrap());
+        let mut rdr = Cursor::new(vec![1]);
+        let mut offset = 0;
+        assert_eq!(1i8, rdr.deserialize(&mut offset).unwrap());
     }
 
     #[test]
     fn serialize_i16() {
-      let mut wtr = Cursor::new(Vec::new());
-      assert_eq!(wtr.serialize(0, 1i16).unwrap(), 2);
-      assert_eq!(wtr.into_inner(), vec![1, 0]);
+        let mut wtr = Cursor::new(Vec::new());
+        assert_eq!(wtr.serialize(0, 1i16).unwrap(), 2);
+        assert_eq!(wtr.into_inner(), vec![1, 0]);
     }
 
     #[test]
     fn deserialize_i16() {
-      let mut rdr = Cursor::new(vec![1, 0]);
-      let mut offset = 0;
-      assert_eq!(1i16, rdr.deserialize(&mut offset).unwrap());
+        let mut rdr = Cursor::new(vec![1, 0]);
+        let mut offset = 0;
+        assert_eq!(1i16, rdr.deserialize(&mut offset).unwrap());
     }
 
     #[test]
     fn serialize_i32() {
-      let mut wtr = Cursor::new(Vec::new());
-      assert_eq!(wtr.serialize(0, 1i32).unwrap(), 4);
-      assert_eq!(wtr.into_inner(), vec![1, 0, 0, 0]);
+        let mut wtr = Cursor::new(Vec::new());
+        assert_eq!(wtr.serialize(0, 1i32).unwrap(), 4);
+        assert_eq!(wtr.into_inner(), vec![1, 0, 0, 0]);
     }
 
     #[test]
     fn deserialize_i32() {
-      let mut rdr = Cursor::new(vec![1, 0, 0, 0]);
-      let mut offset = 0;
-      assert_eq!(1i32, rdr.deserialize(&mut offset).unwrap());
+        let mut rdr = Cursor::new(vec![1, 0, 0, 0]);
+        let mut offset = 0;
+        assert_eq!(1i32, rdr.deserialize(&mut offset).unwrap());
     }
 
     #[test]
     fn serialize_i64() {
-      let mut wtr = Cursor::new(Vec::new());
-      assert_eq!(wtr.serialize(0, 1i64).unwrap(), 8);
-      assert_eq!(wtr.into_inner(), vec![1, 0, 0, 0, 0, 0, 0, 0]);
+        let mut wtr = Cursor::new(Vec::new());
+        assert_eq!(wtr.serialize(0, 1i64).unwrap(), 8);
+        assert_eq!(wtr.into_inner(), vec![1, 0, 0, 0, 0, 0, 0, 0]);
     }
 
     #[test]
     fn deserialize_i64() {
-      let mut rdr = Cursor::new(vec![1, 0, 0, 0, 0, 0, 0, 0]);
-      let mut offset = 0;
-      assert_eq!(1i64, rdr.deserialize(&mut offset).unwrap());
+        let mut rdr = Cursor::new(vec![1, 0, 0, 0, 0, 0, 0, 0]);
+        let mut offset = 0;
+        assert_eq!(1i64, rdr.deserialize(&mut offset).unwrap());
     }
 
     #[test]
     fn serialize_f32() {
-      let mut wtr = Cursor::new(Vec::new());
-      assert_eq!(wtr.serialize(0, 123.0f32).unwrap(), 4);
-      assert_eq!(wtr.into_inner(), vec![0, 0, 0xf6, 0x42]);
+        let mut wtr = Cursor::new(Vec::new());
+        assert_eq!(wtr.serialize(0, 123.0f32).unwrap(), 4);
+        assert_eq!(wtr.into_inner(), vec![0, 0, 0xf6, 0x42]);
     }
 
     #[test]
     fn deserialize_f32() {
-      let mut rdr = Cursor::new(vec![0, 0, 0xf6, 0x42]);
-      let mut offset = 0;
-      assert_eq!(123.0f32, rdr.deserialize(&mut offset).unwrap());
+        let mut rdr = Cursor::new(vec![0, 0, 0xf6, 0x42]);
+        let mut offset = 0;
+        assert_eq!(123.0f32, rdr.deserialize(&mut offset).unwrap());
     }
 
     #[test]
     fn serialize_f64() {
-      let mut wtr = Cursor::new(Vec::new());
-      assert_eq!(wtr.serialize(0, 123.0f64).unwrap(), 8);
-      assert_eq!(wtr.into_inner(), vec![0, 0, 0, 0, 0, 0xc0, 0x5e, 0x40]);
+        let mut wtr = Cursor::new(Vec::new());
+        assert_eq!(wtr.serialize(0, 123.0f64).unwrap(), 8);
+        assert_eq!(wtr.into_inner(), vec![0, 0, 0, 0, 0, 0xc0, 0x5e, 0x40]);
     }
 
     #[test]
     fn deserialize_f64() {
-      let mut rdr = Cursor::new(vec![0, 0, 0, 0, 0, 0xc0, 0x5e, 0x40]);
-      let mut offset = 0;
-      assert_eq!(123.0f64, rdr.deserialize(&mut offset).unwrap());
+        let mut rdr = Cursor::new(vec![0, 0, 0, 0, 0, 0xc0, 0x5e, 0x40]);
+        let mut offset = 0;
+        assert_eq!(123.0f64, rdr.deserialize(&mut offset).unwrap());
     }
 }
