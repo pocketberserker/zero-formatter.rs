@@ -11,20 +11,20 @@ use byteorder::{ReadBytesExt, WriteBytesExt, LittleEndian};
 type Result<T> = std::result::Result<T, Box<std::error::Error>>;
 
 pub trait Formatter<T>: Seek + ReadBytesExt + WriteBytesExt {
-    fn serialize(&mut self, offset: i64, value: T) -> Result<i32>;
-    fn deserialize(&mut self, offset: &mut i64) -> Result<T>;
+    fn serialize(&mut self, offset: u64, value: T) -> Result<i32>;
+    fn deserialize(&mut self, offset: &mut u64) -> Result<T>;
 }
 
 impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<u8> for R {
 
-    fn serialize(&mut self, offset: i64, value: u8) -> Result<i32> {
-        try!(self.seek(SeekFrom::Current(offset)));
+    fn serialize(&mut self, offset: u64, value: u8) -> Result<i32> {
+        try!(self.seek(SeekFrom::Start(offset)));
         try!(self.write_u8(value));
         Ok(1)
     }
 
-    fn deserialize(&mut self, offset: &mut i64) -> Result<u8> {
-        try!(self.seek(SeekFrom::Current(*(offset as &i64))));
+    fn deserialize(&mut self, offset: &mut u64) -> Result<u8> {
+        try!(self.seek(SeekFrom::Start(*(offset as &u64))));
         let n = try!(self.read_u8());
         Ok(n)
     }
@@ -32,14 +32,14 @@ impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<u8> for R {
 
 impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<bool> for R {
 
-    fn serialize(&mut self, offset: i64, value: bool) -> Result<i32> {
+    fn serialize(&mut self, offset: u64, value: bool) -> Result<i32> {
         let i: u8 = if value { 1 } else { 0 };
-        try!(self.seek(SeekFrom::Current(offset)));
+        try!(self.seek(SeekFrom::Start(offset)));
         self.serialize(offset, i)
     }
 
-    fn deserialize(&mut self, offset: &mut i64) -> Result<bool> {
-        try!(self.seek(SeekFrom::Current(*(offset as &i64))));
+    fn deserialize(&mut self, offset: &mut u64) -> Result<bool> {
+        try!(self.seek(SeekFrom::Start(*(offset as &u64))));
         let n: u8 = try!(self.deserialize(offset));
         Ok(if n == 1 { true } else { false })
     }
@@ -47,14 +47,14 @@ impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<bool> for R {
 
 impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<i8> for R {
 
-    fn serialize(&mut self, offset: i64, value: i8) -> Result<i32> {
-        try!(self.seek(SeekFrom::Current(offset)));
+    fn serialize(&mut self, offset: u64, value: i8) -> Result<i32> {
+        try!(self.seek(SeekFrom::Start(offset)));
         try!(self.write_i8(value));
         Ok(1)
     }
 
-    fn deserialize(&mut self, offset: &mut i64) -> Result<i8> {
-        try!(self.seek(SeekFrom::Current(*(offset as &i64))));
+    fn deserialize(&mut self, offset: &mut u64) -> Result<i8> {
+        try!(self.seek(SeekFrom::Start(*(offset as &u64))));
         let n = try!(self.read_i8());
         *offset += 1;
         Ok(n)
@@ -65,14 +65,14 @@ macro_rules! primitive_formatter_impl {
     ($($t:ty; $w:tt; $r:tt; $l:expr),*) => ($(
         impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<$t> for R {
 
-            fn serialize(&mut self, offset: i64, value: $t) -> Result<i32> {
-                try!(self.seek(SeekFrom::Current(offset)));
+            fn serialize(&mut self, offset: u64, value: $t) -> Result<i32> {
+                try!(self.seek(SeekFrom::Start(offset)));
                 try!(self.$w::<LittleEndian>(value));
                 Ok($l)
             }
 
-            fn deserialize(&mut self, offset: &mut i64) -> Result<$t> {
-                try!(self.seek(SeekFrom::Current(*(offset as &i64))));
+            fn deserialize(&mut self, offset: &mut u64) -> Result<$t> {
+                try!(self.seek(SeekFrom::Start(*(offset as &u64))));
                 let n = try!(self.$r::<LittleEndian>());
                 *offset += $l;
                 Ok(n)
@@ -94,26 +94,26 @@ primitive_formatter_impl! {
 
 impl<'a, R: Seek + ReadBytesExt + WriteBytesExt> Formatter<Cow<'a, str>> for R {
 
-    fn serialize(&mut self, offset: i64, value: Cow<'a, str>) -> Result<i32> {
+    fn serialize(&mut self, offset: u64, value: Cow<'a, str>) -> Result<i32> {
         let bytes = value.deref().as_bytes();
         let l = bytes.len();
         //let i = try!(i32::try_from(l));
         let i = l as i32;
-        try!(self.seek(SeekFrom::Current(offset)));
+        try!(self.seek(SeekFrom::Start(offset)));
         try!(self.write_i32::<LittleEndian>(i));
         try!(self.write(bytes));
         Ok(i + 4)
     }
 
-    fn deserialize(&mut self, offset: &mut i64) -> Result<Cow<'a, str>> {
-        try!(self.seek(SeekFrom::Current(*(offset as &i64))));
+    fn deserialize(&mut self, offset: &mut u64) -> Result<Cow<'a, str>> {
+        try!(self.seek(SeekFrom::Start(*(offset as &u64))));
         let i: i32 = try!(self.deserialize(offset));
         //let l = try!(usize::try_from(i));
         let l = i as usize;
         let mut buf = Vec::with_capacity(l);
         unsafe { buf.set_len(l); }
         try!(self.read(&mut buf));
-        *offset += l as i64;
+        *offset += l as u64;
         let s = try!(String::from_utf8(buf));
         Ok(s.into())
     }
@@ -123,22 +123,22 @@ macro_rules! has_value_formatter_impl {
     ($($t:ty)*) => ($(
         impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<Option<$t>> for R {
 
-            fn serialize(&mut self, offset: i64, value: Option<$t>) -> Result<i32> {
-                try!(self.seek(SeekFrom::Current(offset)));
+            fn serialize(&mut self, offset: u64, value: Option<$t>) -> Result<i32> {
+                try!(self.seek(SeekFrom::Start(offset)));
                 match value {
                     None => {
                         self.serialize(offset, false)
                     },
                     Some(v) => {
                         let r1 = try!(self.serialize(offset, true));
-                        let r2 = try!(self.serialize(offset, v));
+                        let r2 = try!(self.serialize(offset + 1, v));
                         Ok(r1 + r2)
                     }
                 }
             }
 
-            fn deserialize(&mut self, offset: &mut i64) -> Result<Option<$t>> {
-                try!(self.seek(SeekFrom::Current(*(offset as &i64))));
+            fn deserialize(&mut self, offset: &mut u64) -> Result<Option<$t>> {
+                try!(self.seek(SeekFrom::Start(*(offset as &u64))));
                 let has_value: bool = try!(self.deserialize(offset));
                 if has_value {
                     self.deserialize(offset).map(|v| Some(v))
@@ -153,12 +153,50 @@ macro_rules! has_value_formatter_impl {
 
 has_value_formatter_impl! { u8 u16 u32 u64 i8 i16 i32 i64 f32 f64 bool }
 
+#[macro_export]
+macro_rules! object_zero_formatter {
+    (struct $name:ident {
+        $($index:expr; $field_name:ident: $field_type:ty),*
+    }) => {
+        struct $name {
+            $($field_name: $field_type),*
+        }
+
+        impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<$name> for R {
+
+            fn serialize(&mut self, offset: u64, value: $name) -> std::result::Result<i32, Box<std::error::Error>> {
+                let last_index: i32 = *([$($index),*].iter().max().unwrap());
+                let mut byte_size: i32 = 4 + 4 + 4 * (last_index + 1);
+
+                try!(self.serialize(offset + 4, last_index));
+
+                $(
+                try!(self.serialize(offset + 4 + 4 + 4 * $index, (offset as i32) + byte_size));
+                let $field_name = try!(self.serialize(offset + (byte_size as u64), value.$field_name));
+                byte_size += $field_name;
+                )*
+
+                try!(self.serialize(offset, byte_size));
+                try!(self.seek(SeekFrom::Start(offset + (byte_size as u64))));
+                Ok(byte_size)
+            }
+
+            fn deserialize(&mut self, offset: &mut u64) -> Result<$name, Box<std::error::Error>> {
+                unimplemented!();
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
+    use std;
     use std::borrow::Cow;
     use std::io::Cursor;
+    use std::io::{Seek, SeekFrom};
     use Formatter;
+    use byteorder::{ReadBytesExt, WriteBytesExt};
 
     #[test]
     fn serialize_bool() {
@@ -342,5 +380,19 @@ mod tests {
         let mut rdr = Cursor::new(vec![1, 1]);
         let mut offset = 0;
         assert_eq!(Some(1u8), rdr.deserialize(&mut offset).unwrap());
+    }
+
+    object_zero_formatter! {
+        struct S {
+            0; a: i32,
+            1; b: i64
+        }
+    }
+
+    #[test]
+    fn serialize_object() {
+        let mut wtr = Cursor::new(Vec::new());
+        assert_eq!(wtr.serialize(0, S { a: 1, b: 2 }).unwrap(), 28);
+        assert_eq!(wtr.into_inner(), vec![28, 0, 0, 0, 1, 0, 0, 0, 16, 0, 0, 0, 20, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0]);
     }
 }
