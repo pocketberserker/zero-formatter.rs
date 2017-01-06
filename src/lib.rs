@@ -26,6 +26,7 @@ impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<u8> for R {
     fn deserialize(&mut self, offset: &mut u64) -> Result<u8> {
         try!(self.seek(SeekFrom::Start(*(offset as &u64))));
         let n = try!(self.read_u8());
+        *offset += 1;
         Ok(n)
     }
 }
@@ -117,6 +118,7 @@ impl<'a, R: Seek + ReadBytesExt + WriteBytesExt> Formatter<Cow<'a, str>> for R {
     }
 }
 
+
 #[macro_export]
 macro_rules! has_value_formatter {
     ($($t:ident)*) => ($(
@@ -137,7 +139,6 @@ macro_rules! has_value_formatter {
 
             fn deserialize(&mut self, offset: &mut u64) -> std::result::Result<Option<$t>, Box<std::error::Error>> {
                 let has_value: bool = try!(self.deserialize(offset));
-                *offset += 1;
                 if has_value {
                     self.deserialize(offset).map(|v| Some(v))
                 }
@@ -275,6 +276,22 @@ macro_rules! struct_formatter {
         }
 
         has_value_formatter! { $name }
+    }
+}
+
+impl<R, A1, A2> Formatter<(A1, A2)> for R
+  where R: Seek + ReadBytesExt + WriteBytesExt + Formatter<A1> + Formatter<A2> {
+
+    fn serialize(&mut self, offset: u64, value: (A1, A2)) -> Result<i32> {
+        let r1 = try!(self.serialize(offset, value.0));
+        let r2 = try!(self.serialize(offset + (r1 as u64), value.1));
+        Ok(r1 + r2)
+    }
+
+    fn deserialize(&mut self, offset: &mut u64) -> Result<(A1, A2)> {
+        let a1: A1 = try!(self.deserialize(offset));
+        let a2: A2 = try!(self.deserialize(offset));
+        Ok((a1, a2))
     }
 }
 
@@ -617,5 +634,19 @@ mod tests {
         let mut offset = 0;
         let expected: Option<S> = None;
         assert_eq!(expected, rdr.deserialize(&mut offset).unwrap());
+    }
+
+    #[test]
+    fn serialize_2_tuple() {
+        let mut wtr = Cursor::new(Vec::new());
+        assert_eq!(wtr.serialize(0, (1u8, 2u8)).unwrap(), 2);
+        assert_eq!(wtr.into_inner(), vec![1, 2]);
+    }
+
+    #[test]
+    fn deserialize_2_tuple() {
+        let mut rdr = Cursor::new(vec![1, 2]);
+        let mut offset = 0;
+        assert_eq!((1u8, 2u8), rdr.deserialize(&mut offset).unwrap());
     }
 }
