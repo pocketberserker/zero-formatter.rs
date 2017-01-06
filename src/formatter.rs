@@ -1,5 +1,3 @@
-extern crate byteorder;
-
 use std;
 use std::error::Error;
 use std::io::Seek;
