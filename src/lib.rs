@@ -124,7 +124,6 @@ macro_rules! has_value_formatter_impl {
         impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<Option<$t>> for R {
 
             fn serialize(&mut self, offset: u64, value: Option<$t>) -> Result<i32> {
-                try!(self.seek(SeekFrom::Start(offset)));
                 match value {
                     None => {
                         self.serialize(offset, false)
@@ -138,7 +137,6 @@ macro_rules! has_value_formatter_impl {
             }
 
             fn deserialize(&mut self, offset: &mut u64) -> Result<Option<$t>> {
-                try!(self.seek(SeekFrom::Start(*(offset as &u64))));
                 let has_value: bool = try!(self.deserialize(offset));
                 if has_value {
                     self.deserialize(offset).map(|v| Some(v))
@@ -154,7 +152,38 @@ macro_rules! has_value_formatter_impl {
 has_value_formatter_impl! { u8 u16 u32 u64 i8 i16 i32 i64 f32 f64 bool }
 
 #[macro_export]
-macro_rules! object_zero_formatter {
+macro_rules! option_formatter {
+    ($($name:ident)*) => ($(
+        impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<Option<$name>> for R {
+
+            fn serialize(&mut self, offset: u64, value: Option<$name>) -> std::result::Result<i32, Box<std::error::Error>> {
+                try!(self.seek(SeekFrom::Start(offset)));
+                match value {
+                    None => {
+                        self.serialize(offset, -1i32)
+                    },
+                    Some(v) => {
+                        self.serialize(offset, v)
+                    }
+                }
+            }
+
+            fn deserialize(&mut self, offset: &mut u64) -> Result<Option<$name>, Box<std::error::Error>> {
+                let len: i32 = try!(self.deserialize(offset));
+                if len == -1 {
+                    Ok(None)
+                }
+                else {
+                    try!(self.seek(SeekFrom::Start(*(offset as &u64) - 4)));
+                    self.deserialize(offset).map(|v| Some(v))
+                }
+            }
+        }
+    )*)
+}
+
+#[macro_export]
+macro_rules! object_formatter {
     (struct $name:ident {
         $($index:expr; $field_name:ident: $field_type:ty),*
     }) => {
@@ -185,6 +214,8 @@ macro_rules! object_zero_formatter {
                 unimplemented!();
             }
         }
+
+        option_formatter! { $name }
     }
 }
 
@@ -382,7 +413,7 @@ mod tests {
         assert_eq!(Some(1u8), rdr.deserialize(&mut offset).unwrap());
     }
 
-    object_zero_formatter! {
+    object_formatter! {
         struct S {
             0; a: i32,
             1; b: i64
@@ -394,5 +425,13 @@ mod tests {
         let mut wtr = Cursor::new(Vec::new());
         assert_eq!(wtr.serialize(0, S { a: 1, b: 2 }).unwrap(), 28);
         assert_eq!(wtr.into_inner(), vec![28, 0, 0, 0, 1, 0, 0, 0, 16, 0, 0, 0, 20, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn serialize_object_none() {
+        let mut wtr = Cursor::new(Vec::new());
+        let input: Option<S> = None;
+        assert_eq!(wtr.serialize(0, input).unwrap(), 4);
+        assert_eq!(wtr.into_inner(), vec![0xff, 0xff, 0xff, 0xff]);
     }
 }
