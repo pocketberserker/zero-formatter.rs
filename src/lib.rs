@@ -289,17 +289,31 @@ mod tests {
     use byteorder::{ReadBytesExt, WriteBytesExt};
 
     #[test]
-    fn serialize_bool() {
+    fn serialize_true() {
         let mut wtr = Cursor::new(Vec::new());
         assert_eq!(wtr.serialize(0, true).unwrap(), 1);
         assert_eq!(wtr.into_inner(), vec![1]);
     }
 
     #[test]
-    fn deserialize_bool() {
+    fn deserialize_true() {
         let mut rdr = Cursor::new(vec![1]);
         let mut offset = 0;
         assert_eq!(true, rdr.deserialize(&mut offset).unwrap());
+    }
+
+    #[test]
+    fn serialize_false() {
+        let mut wtr = Cursor::new(Vec::new());
+        assert_eq!(wtr.serialize(0, false).unwrap(), 1);
+        assert_eq!(wtr.into_inner(), vec![0]);
+    }
+
+    #[test]
+    fn deserialize_false() {
+        let mut rdr = Cursor::new(vec![0]);
+        let mut offset = 0;
+        assert_eq!(false, rdr.deserialize(&mut offset).unwrap());
     }
 
     #[test]
@@ -459,17 +473,33 @@ mod tests {
     }
 
     #[test]
-    fn serialize_option_u8() {
+    fn serialize_u8_some() {
         let mut wtr = Cursor::new(Vec::new());
         assert_eq!(wtr.serialize(0, Some(1u8)).unwrap(), 2);
         assert_eq!(wtr.into_inner(), vec![1, 1]);
     }
 
     #[test]
-    fn deserialize_option_u8() {
+    fn deserialize_u8_some() {
         let mut rdr = Cursor::new(vec![1, 1]);
         let mut offset = 0;
         assert_eq!(Some(1u8), rdr.deserialize(&mut offset).unwrap());
+    }
+
+    #[test]
+    fn serialize_u8_none() {
+        let mut wtr = Cursor::new(Vec::new());
+        let input: Option<u8> = None;
+        assert_eq!(wtr.serialize(0, input).unwrap(), 1);
+        assert_eq!(wtr.into_inner(), vec![0]);
+    }
+
+    #[test]
+    fn deserialize_u8_none() {
+        let mut rdr = Cursor::new(vec![0]);
+        let mut offset = 0;
+        let expected: Option<u8> = None;
+        assert_eq!(expected, rdr.deserialize(&mut offset).unwrap());
     }
 
     object_formatter! {
