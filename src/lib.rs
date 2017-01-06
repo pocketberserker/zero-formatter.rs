@@ -34,14 +34,12 @@ impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<bool> for R {
 
     fn serialize(&mut self, offset: u64, value: bool) -> Result<i32> {
         let i: u8 = if value { 1 } else { 0 };
-        try!(self.seek(SeekFrom::Start(offset)));
         self.serialize(offset, i)
     }
 
     fn deserialize(&mut self, offset: &mut u64) -> Result<bool> {
-        try!(self.seek(SeekFrom::Start(*(offset as &u64))));
         let n: u8 = try!(self.deserialize(offset));
-        Ok(if n == 1 { true } else { false })
+        Ok(n == 1)
     }
 }
 
@@ -119,11 +117,12 @@ impl<'a, R: Seek + ReadBytesExt + WriteBytesExt> Formatter<Cow<'a, str>> for R {
     }
 }
 
-macro_rules! has_value_formatter_impl {
-    ($($t:ty)*) => ($(
+#[macro_export]
+macro_rules! has_value_formatter {
+    ($($t:ident)*) => ($(
         impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<Option<$t>> for R {
 
-            fn serialize(&mut self, offset: u64, value: Option<$t>) -> Result<i32> {
+            fn serialize(&mut self, offset: u64, value: Option<$t>) -> std::result::Result<i32, Box<std::error::Error>> {
                 match value {
                     None => {
                         self.serialize(offset, false)
@@ -136,8 +135,9 @@ macro_rules! has_value_formatter_impl {
                 }
             }
 
-            fn deserialize(&mut self, offset: &mut u64) -> Result<Option<$t>> {
+            fn deserialize(&mut self, offset: &mut u64) -> std::result::Result<Option<$t>, Box<std::error::Error>> {
                 let has_value: bool = try!(self.deserialize(offset));
+                *offset += 1;
                 if has_value {
                     self.deserialize(offset).map(|v| Some(v))
                 }
@@ -149,7 +149,7 @@ macro_rules! has_value_formatter_impl {
     )*)
 }
 
-has_value_formatter_impl! { u8 u16 u32 u64 i8 i16 i32 i64 f32 f64 bool }
+has_value_formatter! { u8 u16 u32 u64 i8 i16 i32 i64 f32 f64 bool }
 
 #[macro_export]
 macro_rules! option_formatter {
@@ -238,6 +238,43 @@ macro_rules! object_formatter {
         }
 
         option_formatter! { $name }
+    }
+}
+
+#[macro_export]
+macro_rules! struct_formatter {
+    (struct $name:ident {
+        $($field_name:ident: $field_type:ty),*
+    }) => {
+        #[derive(Default, Debug, PartialEq, Eq)]
+        struct $name {
+            $($field_name: $field_type),*
+        }
+
+        impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<$name> for R {
+
+            fn serialize(&mut self, offset: u64, value: $name) -> std::result::Result<i32, Box<std::error::Error>> {
+                let mut byte_size: i32 = 0;
+
+                $(
+                let $field_name = try!(self.serialize(offset + (byte_size as u64), value.$field_name));
+                byte_size += $field_name;
+                )*
+
+                Ok(byte_size)
+            }
+
+            fn deserialize(&mut self, offset: &mut u64) -> Result<$name, Box<std::error::Error>> {
+
+                $(
+                let $field_name: $field_type = try!(self.deserialize(offset));
+                )*
+
+                Ok($name { $($field_name: $field_name),* })
+            }
+        }
+
+        has_value_formatter! { $name }
     }
 }
 
@@ -436,7 +473,7 @@ mod tests {
     }
 
     object_formatter! {
-        struct S {
+        struct O {
             0; a: i32,
             1; b: i64
         }
@@ -445,7 +482,7 @@ mod tests {
     #[test]
     fn serialize_object() {
         let mut wtr = Cursor::new(Vec::new());
-        assert_eq!(wtr.serialize(0, S { a: 1, b: 2 }).unwrap(), 28);
+        assert_eq!(wtr.serialize(0, O { a: 1, b: 2 }).unwrap(), 28);
         assert_eq!(wtr.into_inner(), vec![28, 0, 0, 0, 1, 0, 0, 0, 16, 0, 0, 0, 20, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0]);
     }
 
@@ -453,13 +490,13 @@ mod tests {
     fn deserialize_object() {
         let mut rdr = Cursor::new(vec![28, 0, 0, 0, 1, 0, 0, 0, 16, 0, 0, 0, 20, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0]);
         let mut offset = 0;
-        assert_eq!(S { a: 1, b: 2 }, rdr.deserialize(&mut offset).unwrap());
+        assert_eq!(O { a: 1, b: 2 }, rdr.deserialize(&mut offset).unwrap());
     }
 
     #[test]
     fn serialize_object_none() {
         let mut wtr = Cursor::new(Vec::new());
-        let input: Option<S> = None;
+        let input: Option<O> = None;
         assert_eq!(wtr.serialize(0, input).unwrap(), 4);
         assert_eq!(wtr.into_inner(), vec![0xff, 0xff, 0xff, 0xff]);
     }
@@ -468,12 +505,12 @@ mod tests {
     fn deserialize_object_none() {
         let mut rdr = Cursor::new(vec![0xff, 0xff, 0xff, 0xff]);
         let mut offset = 0;
-        let expected: Option<S> = None;
+        let expected: Option<O> = None;
         assert_eq!(expected, rdr.deserialize(&mut offset).unwrap());
     }
 
     object_formatter! {
-        struct S2 {
+        struct O2 {
             0; a: i32,
             1; b: i64,
             2; c: i8
@@ -484,6 +521,57 @@ mod tests {
     fn deserialize_object_versioning() {
         let mut rdr = Cursor::new(vec![28, 0, 0, 0, 1, 0, 0, 0, 16, 0, 0, 0, 20, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0]);
         let mut offset = 0;
-        assert_eq!(S2 { a: 1, b: 2, c: 0 }, rdr.deserialize(&mut offset).unwrap());
+        assert_eq!(O2 { a: 1, b: 2, c: 0 }, rdr.deserialize(&mut offset).unwrap());
+    }
+
+    struct_formatter! {
+        struct S {
+            a: i32,
+            b: i64
+        }
+    }
+
+    #[test]
+    fn serialize_struct() {
+        let mut wtr = Cursor::new(Vec::new());
+        assert_eq!(wtr.serialize(0, S { a: 1, b: 2 }).unwrap(), 12);
+        assert_eq!(wtr.into_inner(), vec![1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn deserialize_struct() {
+        let mut rdr = Cursor::new(vec![1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0]);
+        let mut offset = 0;
+        assert_eq!(S { a: 1, b: 2 }, rdr.deserialize(&mut offset).unwrap());
+    }
+
+    #[test]
+    fn serialize_struct_some() {
+        let mut wtr = Cursor::new(Vec::new());
+        assert_eq!(wtr.serialize(0, Some(S { a: 1, b: 2 })).unwrap(), 13);
+        assert_eq!(wtr.into_inner(), vec![1, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn deserialize_struct_some() {
+        let mut rdr = Cursor::new(vec![1, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0]);
+        let mut offset = 0;
+        assert_eq!(Some(S { a: 1, b: 2 }), rdr.deserialize(&mut offset).unwrap());
+    }
+
+    #[test]
+    fn serialize_struct_none() {
+        let mut wtr = Cursor::new(Vec::new());
+        let input: Option<S> = None;
+        assert_eq!(wtr.serialize(0, input).unwrap(), 1);
+        assert_eq!(wtr.into_inner(), vec![0]);
+    }
+
+    #[test]
+    fn deserialize_struct_none() {
+        let mut rdr = Cursor::new(vec![0]);
+        let mut offset = 0;
+        let expected: Option<S> = None;
+        assert_eq!(expected, rdr.deserialize(&mut offset).unwrap());
     }
 }
