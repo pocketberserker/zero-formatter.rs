@@ -169,7 +169,7 @@ macro_rules! option_formatter {
                 }
             }
 
-            fn deserialize(&mut self, offset: &mut u64) -> Result<Option<$name>, Box<std::error::Error>> {
+            fn deserialize(&mut self, offset: &mut u64) -> std::result::Result<Option<$name>, Box<std::error::Error>> {
                 let len: i32 = try!(self.deserialize(offset));
                 if len == -1 {
                     Ok(None)
@@ -212,7 +212,7 @@ macro_rules! object_formatter {
                 Ok(byte_size)
             }
 
-            fn deserialize(&mut self, offset: &mut u64) -> Result<$name, Box<std::error::Error>> {
+            fn deserialize(&mut self, offset: &mut u64) -> std::result::Result<$name, Box<std::error::Error>> {
 
                 let start_offset: u64 = *offset;
                 let byte_size: i32 = try!(self.deserialize(offset));
@@ -265,7 +265,7 @@ macro_rules! struct_formatter {
                 Ok(byte_size)
             }
 
-            fn deserialize(&mut self, offset: &mut u64) -> Result<$name, Box<std::error::Error>> {
+            fn deserialize(&mut self, offset: &mut u64) -> std::result::Result<$name, Box<std::error::Error>> {
 
                 $(
                 let $field_name: $field_type = try!(self.deserialize(offset));
