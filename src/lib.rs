@@ -174,7 +174,7 @@ macro_rules! option_formatter {
                     Ok(None)
                 }
                 else {
-                    try!(self.seek(SeekFrom::Start(*(offset as &u64) - 4)));
+                    *offset -= 4;
                     self.deserialize(offset).map(|v| Some(v))
                 }
             }
@@ -491,6 +491,20 @@ mod tests {
         let mut rdr = Cursor::new(vec![28, 0, 0, 0, 1, 0, 0, 0, 16, 0, 0, 0, 20, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0]);
         let mut offset = 0;
         assert_eq!(O { a: 1, b: 2 }, rdr.deserialize(&mut offset).unwrap());
+    }
+
+    #[test]
+    fn serialize_object_some() {
+        let mut wtr = Cursor::new(Vec::new());
+        assert_eq!(wtr.serialize(0, Some(O { a: 1, b: 2 })).unwrap(), 28);
+        assert_eq!(wtr.into_inner(), vec![28, 0, 0, 0, 1, 0, 0, 0, 16, 0, 0, 0, 20, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn deserialize_object_some() {
+        let mut rdr = Cursor::new(vec![28, 0, 0, 0, 1, 0, 0, 0, 16, 0, 0, 0, 20, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0]);
+        let mut offset = 0;
+        assert_eq!(Some(O { a: 1, b: 2 }), rdr.deserialize(&mut offset).unwrap());
     }
 
     #[test]
