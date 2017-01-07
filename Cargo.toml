@@ -8,7 +8,7 @@ documentation = "https://pocketberserker.github.io/zero-formatter.rs/"
 repository = "https://github.com/pocketberserker/zero-formatter.rs"
 keywords = ["ZeroFormatter", "serialization", "serializer", "binary"]
 readme = "README.md"
-license = "MIT
+license = "MIT"
 
 [dependencies]
 byteorder = "1.0"
