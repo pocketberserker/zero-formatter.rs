@@ -2,6 +2,13 @@
 name = "zero_formatter"
 version = "0.0.1"
 authors = ["pocketberserker <pocketberserker@gmail.com>"]
+description = "ZeroFormatter implementation for Rust"
+homepage = "https://github.com/pocketberserker/zero-formatter.rs"
+documentation = "https://pocketberserker.github.io/zero-formatter.rs/"
+repository = "https://github.com/pocketberserker/zero-formatter.rs"
+keywords = ["ZeroFormatter", "serialization", "serializer", "binary"]
+readme = "README.md"
+license = "MIT
 
 [dependencies]
 byteorder = "1.0"
