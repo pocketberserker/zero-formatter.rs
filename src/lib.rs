@@ -1,4 +1,5 @@
 extern crate byteorder;
+extern crate chrono;
 
 mod error;
 mod formatter;
@@ -7,6 +8,7 @@ mod primitive;
 mod has_value;
 #[macro_use]
 mod object;
+mod time;
 
 pub use error::ZeroFormatterResult;
 pub use error::ZeroFormatterError;

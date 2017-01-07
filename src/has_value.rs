@@ -3,10 +3,11 @@ use formatter::*;
 
 use std::io::Seek;
 use byteorder::{ReadBytesExt, WriteBytesExt};
+use chrono::{UTC, DateTime};
 
 #[macro_export]
 macro_rules! has_value_formatter {
-    ($($t:ident)*) => ($(
+    ($($t:ty),*) => ($(
         impl<R> Formatter<Option<$t>> for R where R: Seek + ReadBytesExt + WriteBytesExt {
 
             fn serialize(&mut self, offset: u64, value: Option<$t>) -> ZeroFormatterResult<i32> {
@@ -35,7 +36,20 @@ macro_rules! has_value_formatter {
     )*)
 }
 
-has_value_formatter! { u8 u16 u32 u64 i8 i16 i32 i64 f32 f64 bool }
+has_value_formatter! {
+    u8,
+    u16,
+    u32,
+    u64,
+    i8,
+    i16,
+    i32,
+    i64,
+    f32,
+    f64,
+    bool,
+    DateTime<UTC>
+}
 
 #[cfg(test)]
 mod tests {
