@@ -9,7 +9,7 @@ macro_rules! struct_formatter {
     (struct $name:ident {
         $($field_name:ident: $field_type:ty),*
     }) => {
-        #[derive(Default, Debug, PartialEq, Eq)]
+        #[derive(Default, Debug, PartialEq, Eq, Copy, Clone)]
         pub struct $name {
             $(pub $field_name: $field_type),*
         }
@@ -93,7 +93,7 @@ macro_rules! object_formatter {
     (struct $name:ident {
         $($index:expr; $field_name:ident: $field_type:ty),*
     }) => {
-        #[derive(Default, Debug, PartialEq, Eq)]
+        #[derive(Default, Debug, PartialEq, Eq, Copy, Clone)]
         pub struct $name {
             $(pub $field_name: $field_type),*
         }
