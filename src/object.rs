@@ -10,8 +10,8 @@ macro_rules! struct_formatter {
         $($field_name:ident: $field_type:ty),*
     }) => {
         #[derive(Default, Debug, PartialEq, Eq)]
-        struct $name {
-            $($field_name: $field_type),*
+        pub struct $name {
+            $(pub $field_name: $field_type),*
         }
 
         impl<R> Formatter<$name> for R where R: Seek + ReadBytesExt + WriteBytesExt {
@@ -94,8 +94,8 @@ macro_rules! object_formatter {
         $($index:expr; $field_name:ident: $field_type:ty),*
     }) => {
         #[derive(Default, Debug, PartialEq, Eq)]
-        struct $name {
-            $($field_name: $field_type),*
+        pub struct $name {
+            $(pub $field_name: $field_type),*
         }
 
         impl<R> Formatter<$name> for R where R: Seek + ReadBytesExt + WriteBytesExt {
