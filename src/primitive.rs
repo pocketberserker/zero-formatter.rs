@@ -99,7 +99,6 @@ impl<'a, R> Formatter<Cow<'a, str>> for R where R: Seek + ReadBytesExt + WriteBy
     }
 
     fn deserialize(&mut self, offset: &mut u64) -> ZeroFormatterResult<Cow<'a, str>> {
-        try!(self.seek(SeekFrom::Start(*(offset as &u64))));
         let i: i32 = try!(self.deserialize(offset));
         //let l = try!(usize::try_from(i));
         let l = i as usize;
