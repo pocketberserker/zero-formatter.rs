@@ -6,7 +6,7 @@ use byteorder::{ReadBytesExt, WriteBytesExt};
 
 #[macro_export]
 macro_rules! struct_formatter {
-    (struct $name:ident {
+    ($name:ident {
         $($field_name:ident: $field_type:ty),*
     }) => {
         #[derive(Default, Debug, PartialEq, Eq, Copy, Clone)]
@@ -90,7 +90,7 @@ macro_rules! option_formatter {
 
 #[macro_export]
 macro_rules! object_formatter {
-    (struct $name:ident {
+    ($name:ident {
         $($index:expr; $field_name:ident: $field_type:ty),*
     }) => {
         #[derive(Default, Debug, PartialEq, Eq, Copy, Clone)]
@@ -157,7 +157,7 @@ mod tests {
     use byteorder::{ReadBytesExt, WriteBytesExt};
 
     object_formatter! {
-        struct O {
+        O {
             0; a: i32,
             1; b: i64
         }
@@ -208,7 +208,7 @@ mod tests {
     }
 
     object_formatter! {
-        struct O2 {
+        O2 {
             0; a: i32,
             1; b: i64,
             2; c: i8
@@ -223,7 +223,7 @@ mod tests {
     }
 
     struct_formatter! {
-        struct S {
+        S {
             a: i32,
             b: i64
         }

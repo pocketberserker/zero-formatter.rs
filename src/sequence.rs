@@ -69,7 +69,7 @@ mod tests {
     }
 
     struct_formatter! {
-        struct S {
+        S {
             a: i32
         }
     }
@@ -91,7 +91,7 @@ mod tests {
     }
 
     object_formatter! {
-        struct O {
+        O {
             0; a: i32
         }
     }
