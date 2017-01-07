@@ -10,6 +10,7 @@ mod has_value;
 mod object;
 mod time;
 mod sequence;
+mod union;
 
 pub use error::ZeroFormatterResult;
 pub use error::ZeroFormatterError;

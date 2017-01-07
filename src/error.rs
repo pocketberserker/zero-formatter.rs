@@ -8,7 +8,14 @@ pub type ZeroFormatterResult<T> = Result<T, ZeroFormatterError>;
 #[derive(Debug)]
 pub enum ZeroFormatterError {
     IoError(io::Error),
-    Utf8Error(FromUtf8Error)
+    Utf8Error(FromUtf8Error),
+    UnionKeyNotFound
+}
+
+impl ZeroFormatterError {
+    pub fn union_key_not_found<T>() -> ZeroFormatterResult<T> {
+        Err(ZeroFormatterError::UnionKeyNotFound)
+    }
 }
 
 impl fmt::Display for ZeroFormatterError {
@@ -21,14 +28,16 @@ impl Error for ZeroFormatterError {
     fn description(&self) -> &str {
         match self {
             &ZeroFormatterError::IoError(ref e) => e.description(),
-            &ZeroFormatterError::Utf8Error(ref e) => e.description()
+            &ZeroFormatterError::Utf8Error(ref e) => e.description(),
+            &ZeroFormatterError::UnionKeyNotFound => "Union key does not found."
         }
     }
 
     fn cause(&self) -> Option<&Error> {
         match self {
             &ZeroFormatterError::IoError(ref e) => Some(e),
-            &ZeroFormatterError::Utf8Error(ref e) => Some(e)
+            &ZeroFormatterError::Utf8Error(ref e) => Some(e),
+            &ZeroFormatterError::UnionKeyNotFound => None
         }
     }
 }
@@ -49,7 +58,8 @@ impl From<ZeroFormatterError> for io::Error {
     fn from(err: ZeroFormatterError) -> Self {
         match err {
             ZeroFormatterError::IoError(e) => e,
-            e @ ZeroFormatterError::Utf8Error(_) => io::Error::new(io::ErrorKind::InvalidData, e)
+            e @ ZeroFormatterError::Utf8Error(_) => io::Error::new(io::ErrorKind::InvalidData, e),
+            e @ ZeroFormatterError::UnionKeyNotFound => io::Error::new(io::ErrorKind::InvalidData, e)
         }
     }
 }
