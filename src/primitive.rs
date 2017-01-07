@@ -9,7 +9,7 @@ use std::string::String;
 use std::io::{Seek, SeekFrom};
 use byteorder::{ReadBytesExt, WriteBytesExt, LittleEndian};
 
-impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<u8> for R {
+impl<R> Formatter<u8> for R where R: Seek + ReadBytesExt + WriteBytesExt {
 
     fn serialize(&mut self, offset: u64, value: u8) -> ZeroFormatterResult<i32> {
         try!(self.seek(SeekFrom::Start(offset)));
@@ -25,7 +25,7 @@ impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<u8> for R {
     }
 }
 
-impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<bool> for R {
+impl<R> Formatter<bool> for R where R: Seek + ReadBytesExt + WriteBytesExt {
 
     fn serialize(&mut self, offset: u64, value: bool) -> ZeroFormatterResult<i32> {
         let i: u8 = if value { 1 } else { 0 };
@@ -38,7 +38,7 @@ impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<bool> for R {
     }
 }
 
-impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<i8> for R {
+impl<R> Formatter<i8> for R where R: Seek + ReadBytesExt + WriteBytesExt {
 
     fn serialize(&mut self, offset: u64, value: i8) -> ZeroFormatterResult<i32> {
         try!(self.seek(SeekFrom::Start(offset)));
@@ -56,7 +56,7 @@ impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<i8> for R {
 
 macro_rules! primitive_formatter_impl {
     ($($t:ty; $w:tt; $r:tt; $l:expr),*) => ($(
-        impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<$t> for R {
+        impl<R> Formatter<$t> for R where R: Seek + ReadBytesExt + WriteBytesExt {
 
             fn serialize(&mut self, offset: u64, value: $t) -> ZeroFormatterResult<i32> {
                 try!(self.seek(SeekFrom::Start(offset)));
@@ -85,7 +85,7 @@ primitive_formatter_impl! {
     f64; write_f64; read_f64; 8
 }
 
-impl<'a, R: Seek + ReadBytesExt + WriteBytesExt> Formatter<Cow<'a, str>> for R {
+impl<'a, R> Formatter<Cow<'a, str>> for R where R: Seek + ReadBytesExt + WriteBytesExt {
 
     fn serialize(&mut self, offset: u64, value: Cow<'a, str>) -> ZeroFormatterResult<i32> {
         let bytes = value.deref().as_bytes();

@@ -14,7 +14,7 @@ macro_rules! struct_formatter {
             $($field_name: $field_type),*
         }
 
-        impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<$name> for R {
+        impl<R> Formatter<$name> for R where R: Seek + ReadBytesExt + WriteBytesExt {
 
             fn serialize(&mut self, offset: u64, value: $name) -> ZeroFormatterResult<i32> {
                 let mut byte_size: i32 = 0;
@@ -60,7 +60,7 @@ impl<R, A1, A2> Formatter<(A1, A2)> for R
 #[macro_export]
 macro_rules! option_formatter {
     ($($name:ident)*) => ($(
-        impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<Option<$name>> for R {
+        impl<R> Formatter<Option<$name>> for R where R: Seek + ReadBytesExt + WriteBytesExt {
 
             fn serialize(&mut self, offset: u64, value: Option<$name>) -> ZeroFormatterResult<i32> {
                 try!(self.seek(SeekFrom::Start(offset)));
@@ -98,7 +98,7 @@ macro_rules! object_formatter {
             $($field_name: $field_type),*
         }
 
-        impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<$name> for R {
+        impl<R> Formatter<$name> for R where R: Seek + ReadBytesExt + WriteBytesExt {
 
             fn serialize(&mut self, offset: u64, value: $name) -> ZeroFormatterResult<i32> {
                 let last_index: i32 = *([$($index),*].iter().max().unwrap());

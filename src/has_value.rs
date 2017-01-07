@@ -7,7 +7,7 @@ use byteorder::{ReadBytesExt, WriteBytesExt};
 #[macro_export]
 macro_rules! has_value_formatter {
     ($($t:ident)*) => ($(
-        impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<Option<$t>> for R {
+        impl<R> Formatter<Option<$t>> for R where R: Seek + ReadBytesExt + WriteBytesExt {
 
             fn serialize(&mut self, offset: u64, value: Option<$t>) -> ZeroFormatterResult<i32> {
                 match value {
