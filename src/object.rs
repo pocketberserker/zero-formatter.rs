@@ -1,3 +1,4 @@
+use error::*;
 use formatter::*;
 
 use std::io::Seek;
@@ -15,7 +16,7 @@ macro_rules! struct_formatter {
 
         impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<$name> for R {
 
-            fn serialize(&mut self, offset: u64, value: $name) -> std::result::Result<i32, Box<std::error::Error>> {
+            fn serialize(&mut self, offset: u64, value: $name) -> ZeroFormatterResult<i32> {
                 let mut byte_size: i32 = 0;
 
                 $(
@@ -26,7 +27,7 @@ macro_rules! struct_formatter {
                 Ok(byte_size)
             }
 
-            fn deserialize(&mut self, offset: &mut u64) -> std::result::Result<$name, Box<std::error::Error>> {
+            fn deserialize(&mut self, offset: &mut u64) -> ZeroFormatterResult<$name> {
 
                 $(
                 let $field_name: $field_type = try!(self.deserialize(offset));
@@ -43,13 +44,13 @@ macro_rules! struct_formatter {
 impl<R, A1, A2> Formatter<(A1, A2)> for R
   where R: Seek + ReadBytesExt + WriteBytesExt + Formatter<A1> + Formatter<A2> {
 
-    fn serialize(&mut self, offset: u64, value: (A1, A2)) -> Result<i32> {
+    fn serialize(&mut self, offset: u64, value: (A1, A2)) -> ZeroFormatterResult<i32> {
         let r1 = try!(self.serialize(offset, value.0));
         let r2 = try!(self.serialize(offset + (r1 as u64), value.1));
         Ok(r1 + r2)
     }
 
-    fn deserialize(&mut self, offset: &mut u64) -> Result<(A1, A2)> {
+    fn deserialize(&mut self, offset: &mut u64) -> ZeroFormatterResult<(A1, A2)> {
         let a1: A1 = try!(self.deserialize(offset));
         let a2: A2 = try!(self.deserialize(offset));
         Ok((a1, a2))
@@ -61,7 +62,7 @@ macro_rules! option_formatter {
     ($($name:ident)*) => ($(
         impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<Option<$name>> for R {
 
-            fn serialize(&mut self, offset: u64, value: Option<$name>) -> std::result::Result<i32, Box<std::error::Error>> {
+            fn serialize(&mut self, offset: u64, value: Option<$name>) -> ZeroFormatterResult<i32> {
                 try!(self.seek(SeekFrom::Start(offset)));
                 match value {
                     None => {
@@ -73,7 +74,7 @@ macro_rules! option_formatter {
                 }
             }
 
-            fn deserialize(&mut self, offset: &mut u64) -> std::result::Result<Option<$name>, Box<std::error::Error>> {
+            fn deserialize(&mut self, offset: &mut u64) -> ZeroFormatterResult<Option<$name>> {
                 let len: i32 = try!(self.deserialize(offset));
                 if len == -1 {
                     Ok(None)
@@ -99,7 +100,7 @@ macro_rules! object_formatter {
 
         impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<$name> for R {
 
-            fn serialize(&mut self, offset: u64, value: $name) -> std::result::Result<i32, Box<std::error::Error>> {
+            fn serialize(&mut self, offset: u64, value: $name) -> ZeroFormatterResult<i32> {
                 let last_index: i32 = *([$($index),*].iter().max().unwrap());
                 let mut byte_size: i32 = 4 + 4 + 4 * (last_index + 1);
 
@@ -116,7 +117,7 @@ macro_rules! object_formatter {
                 Ok(byte_size)
             }
 
-            fn deserialize(&mut self, offset: &mut u64) -> std::result::Result<$name, Box<std::error::Error>> {
+            fn deserialize(&mut self, offset: &mut u64) -> ZeroFormatterResult<$name> {
 
                 let start_offset: u64 = *offset;
                 let byte_size: i32 = try!(self.deserialize(offset));
@@ -149,10 +150,10 @@ macro_rules! object_formatter {
 #[cfg(test)]
 mod tests {
 
-    use std;
     use std::io::Cursor;
     use std::io::{Seek, SeekFrom};
-    use Formatter;
+    use error::*;
+    use formatter::*;
     use byteorder::{ReadBytesExt, WriteBytesExt};
 
     object_formatter! {

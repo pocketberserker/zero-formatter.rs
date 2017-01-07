@@ -1,6 +1,6 @@
+use error::*;
 use formatter::*;
 
-use std;
 use std::io::Seek;
 use byteorder::{ReadBytesExt, WriteBytesExt};
 
@@ -9,7 +9,7 @@ macro_rules! has_value_formatter {
     ($($t:ident)*) => ($(
         impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<Option<$t>> for R {
 
-            fn serialize(&mut self, offset: u64, value: Option<$t>) -> std::result::Result<i32, Box<std::error::Error>> {
+            fn serialize(&mut self, offset: u64, value: Option<$t>) -> ZeroFormatterResult<i32> {
                 match value {
                     None => {
                         self.serialize(offset, false)
@@ -22,7 +22,7 @@ macro_rules! has_value_formatter {
                 }
             }
 
-            fn deserialize(&mut self, offset: &mut u64) -> std::result::Result<Option<$t>, Box<std::error::Error>> {
+            fn deserialize(&mut self, offset: &mut u64) -> ZeroFormatterResult<Option<$t>> {
                 let has_value: bool = try!(self.deserialize(offset));
                 if has_value {
                     self.deserialize(offset).map(|v| Some(v))

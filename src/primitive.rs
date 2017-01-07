@@ -1,3 +1,4 @@
+use error::*;
 use formatter::*;
 
 use std::{i32, usize};
@@ -10,13 +11,13 @@ use byteorder::{ReadBytesExt, WriteBytesExt, LittleEndian};
 
 impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<u8> for R {
 
-    fn serialize(&mut self, offset: u64, value: u8) -> Result<i32> {
+    fn serialize(&mut self, offset: u64, value: u8) -> ZeroFormatterResult<i32> {
         try!(self.seek(SeekFrom::Start(offset)));
         try!(self.write_u8(value));
         Ok(1)
     }
 
-    fn deserialize(&mut self, offset: &mut u64) -> Result<u8> {
+    fn deserialize(&mut self, offset: &mut u64) -> ZeroFormatterResult<u8> {
         try!(self.seek(SeekFrom::Start(*(offset as &u64))));
         let n = try!(self.read_u8());
         *offset += 1;
@@ -26,12 +27,12 @@ impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<u8> for R {
 
 impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<bool> for R {
 
-    fn serialize(&mut self, offset: u64, value: bool) -> Result<i32> {
+    fn serialize(&mut self, offset: u64, value: bool) -> ZeroFormatterResult<i32> {
         let i: u8 = if value { 1 } else { 0 };
         self.serialize(offset, i)
     }
 
-    fn deserialize(&mut self, offset: &mut u64) -> Result<bool> {
+    fn deserialize(&mut self, offset: &mut u64) -> ZeroFormatterResult<bool> {
         let n: u8 = try!(self.deserialize(offset));
         Ok(n == 1)
     }
@@ -39,13 +40,13 @@ impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<bool> for R {
 
 impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<i8> for R {
 
-    fn serialize(&mut self, offset: u64, value: i8) -> Result<i32> {
+    fn serialize(&mut self, offset: u64, value: i8) -> ZeroFormatterResult<i32> {
         try!(self.seek(SeekFrom::Start(offset)));
         try!(self.write_i8(value));
         Ok(1)
     }
 
-    fn deserialize(&mut self, offset: &mut u64) -> Result<i8> {
+    fn deserialize(&mut self, offset: &mut u64) -> ZeroFormatterResult<i8> {
         try!(self.seek(SeekFrom::Start(*(offset as &u64))));
         let n = try!(self.read_i8());
         *offset += 1;
@@ -57,13 +58,13 @@ macro_rules! primitive_formatter_impl {
     ($($t:ty; $w:tt; $r:tt; $l:expr),*) => ($(
         impl<R: Seek + ReadBytesExt + WriteBytesExt> Formatter<$t> for R {
 
-            fn serialize(&mut self, offset: u64, value: $t) -> Result<i32> {
+            fn serialize(&mut self, offset: u64, value: $t) -> ZeroFormatterResult<i32> {
                 try!(self.seek(SeekFrom::Start(offset)));
                 try!(self.$w::<LittleEndian>(value));
                 Ok($l)
             }
 
-            fn deserialize(&mut self, offset: &mut u64) -> Result<$t> {
+            fn deserialize(&mut self, offset: &mut u64) -> ZeroFormatterResult<$t> {
                 try!(self.seek(SeekFrom::Start(*(offset as &u64))));
                 let n = try!(self.$r::<LittleEndian>());
                 *offset += $l;
@@ -86,7 +87,7 @@ primitive_formatter_impl! {
 
 impl<'a, R: Seek + ReadBytesExt + WriteBytesExt> Formatter<Cow<'a, str>> for R {
 
-    fn serialize(&mut self, offset: u64, value: Cow<'a, str>) -> Result<i32> {
+    fn serialize(&mut self, offset: u64, value: Cow<'a, str>) -> ZeroFormatterResult<i32> {
         let bytes = value.deref().as_bytes();
         let l = bytes.len();
         //let i = try!(i32::try_from(l));
@@ -97,7 +98,7 @@ impl<'a, R: Seek + ReadBytesExt + WriteBytesExt> Formatter<Cow<'a, str>> for R {
         Ok(i + 4)
     }
 
-    fn deserialize(&mut self, offset: &mut u64) -> Result<Cow<'a, str>> {
+    fn deserialize(&mut self, offset: &mut u64) -> ZeroFormatterResult<Cow<'a, str>> {
         try!(self.seek(SeekFrom::Start(*(offset as &u64))));
         let i: i32 = try!(self.deserialize(offset));
         //let l = try!(usize::try_from(i));
