@@ -39,7 +39,7 @@ macro_rules! union_formatter {
                         Ok( $name::$case_name (v) )
                     }
                     ),*,
-                    _ => ZeroFormatterError::union_key_not_found()
+                    _ => ZeroFormatterError::invalid_binary(*offset)
                 }
             }
         }

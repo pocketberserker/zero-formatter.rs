@@ -79,6 +79,9 @@ macro_rules! option_formatter {
                 if len == -1 {
                     Ok(None)
                 }
+                else if len < -1 {
+                    ZeroFormatterError::invalid_binary(*offset)
+                }
                 else {
                     *offset -= 4;
                     self.deserialize(offset).map(|v| Some(v))

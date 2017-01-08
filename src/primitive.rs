@@ -34,7 +34,9 @@ impl<R> Formatter<bool> for R where R: Seek + ReadBytesExt + WriteBytesExt {
 
     fn deserialize(&mut self, offset: &mut u64) -> ZeroFormatterResult<bool> {
         let n: u8 = try!(self.deserialize(offset));
-        Ok(n == 1)
+        if n == 1 { Ok(true) }
+        else if n == 0 { Ok(false) }
+        else { ZeroFormatterError::invalid_binary(*offset) }
     }
 }
 

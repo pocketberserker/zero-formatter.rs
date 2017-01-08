@@ -9,18 +9,22 @@ pub type ZeroFormatterResult<T> = Result<T, ZeroFormatterError>;
 pub enum ZeroFormatterError {
     IoError(io::Error),
     Utf8Error(FromUtf8Error),
-    UnionKeyNotFound
+    InvalidBinary(u64)
 }
 
 impl ZeroFormatterError {
-    pub fn union_key_not_found<T>() -> ZeroFormatterResult<T> {
-        Err(ZeroFormatterError::UnionKeyNotFound)
+    pub fn invalid_binary<T>(offset: u64) -> ZeroFormatterResult<T> {
+        Err(ZeroFormatterError::InvalidBinary(offset))
     }
 }
 
 impl fmt::Display for ZeroFormatterError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Debug::fmt(self, f)
+        match *self {
+            ZeroFormatterError::IoError(_) | ZeroFormatterError::Utf8Error(_) => fmt::Debug::fmt(self, f),
+            ZeroFormatterError::InvalidBinary(ref offset) =>
+                write!(f, "[offset {}] Binary does not valid.", *offset)
+        }
     }
 }
 
@@ -29,7 +33,7 @@ impl Error for ZeroFormatterError {
         match self {
             &ZeroFormatterError::IoError(ref e) => e.description(),
             &ZeroFormatterError::Utf8Error(ref e) => e.description(),
-            &ZeroFormatterError::UnionKeyNotFound => "Union key does not found."
+            &ZeroFormatterError::InvalidBinary(_) => "Binary does not valid."
         }
     }
 
@@ -37,7 +41,7 @@ impl Error for ZeroFormatterError {
         match self {
             &ZeroFormatterError::IoError(ref e) => Some(e),
             &ZeroFormatterError::Utf8Error(ref e) => Some(e),
-            &ZeroFormatterError::UnionKeyNotFound => None
+            &ZeroFormatterError::InvalidBinary(_) => None
         }
     }
 }
@@ -59,7 +63,7 @@ impl From<ZeroFormatterError> for io::Error {
         match err {
             ZeroFormatterError::IoError(e) => e,
             e @ ZeroFormatterError::Utf8Error(_) => io::Error::new(io::ErrorKind::InvalidData, e),
-            e @ ZeroFormatterError::UnionKeyNotFound => io::Error::new(io::ErrorKind::InvalidData, e)
+            e @ ZeroFormatterError::InvalidBinary(_) => io::Error::new(io::ErrorKind::InvalidData, e)
         }
     }
 }
