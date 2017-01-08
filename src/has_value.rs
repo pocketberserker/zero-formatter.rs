@@ -4,6 +4,7 @@ use formatter::*;
 use std::io::Seek;
 use byteorder::{ReadBytesExt, WriteBytesExt};
 use chrono::{UTC, DateTime};
+use std::time::Duration;
 
 #[macro_export]
 macro_rules! has_value_formatter {
@@ -48,7 +49,8 @@ has_value_formatter! {
     f32,
     f64,
     bool,
-    DateTime<UTC>
+    DateTime<UTC>,
+    Duration
 }
 
 #[cfg(test)]
