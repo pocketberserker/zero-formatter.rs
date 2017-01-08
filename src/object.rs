@@ -6,7 +6,8 @@ use byteorder::{ReadBytesExt, WriteBytesExt};
 
 #[macro_export]
 macro_rules! struct_formatter {
-    ($name:ident {
+    (#[target($buffer:ty)]
+    $name:ident {
         $($field_name:ident: $field_type:ty),*
     }) => {
         #[derive(Default, Debug, PartialEq, Eq, Copy, Clone)]
@@ -14,7 +15,7 @@ macro_rules! struct_formatter {
             $(pub $field_name: $field_type),*
         }
 
-        impl<R> Formatter<$name> for R where R: Seek + ReadBytesExt + WriteBytesExt {
+        impl Formatter<$name> for $buffer {
 
             fn serialize(&mut self, offset: u64, value: $name) -> ZeroFormatterResult<i32> {
                 let mut byte_size: i32 = 0;
@@ -37,7 +38,10 @@ macro_rules! struct_formatter {
             }
         }
 
-        has_value_formatter! { $name }
+        has_value_formatter! {
+            #[target($buffer)]
+            $name
+        }
     }
 }
 
@@ -59,7 +63,8 @@ impl<R, A1, A2> Formatter<(A1, A2)> for R
 
 #[macro_export]
 macro_rules! object_formatter {
-    ($name:ident {
+    (#[target($buffer:ty)]
+    $name:ident {
         $($index:expr; $field_name:ident: $field_type:ty),*
     }) => {
         #[derive(Default, Debug, PartialEq, Eq, Copy, Clone)]
@@ -67,7 +72,7 @@ macro_rules! object_formatter {
             $(pub $field_name: $field_type),*
         }
 
-        impl<R> Formatter<$name> for R where R: Seek + ReadBytesExt + WriteBytesExt {
+        impl Formatter<$name> for $buffer {
 
             fn serialize(&mut self, offset: u64, value: $name) -> ZeroFormatterResult<i32> {
                 let last_index: i32 = *([$($index),*].iter().max().unwrap());
@@ -112,7 +117,10 @@ macro_rules! object_formatter {
             }
         }
 
-        option_formatter! { $name }
+        option_formatter! {
+            #[target($buffer)]
+            $name
+        }
     }
 }
 
@@ -124,9 +132,9 @@ mod tests {
     use error::*;
     use formatter::*;
     use util;
-    use byteorder::{ReadBytesExt, WriteBytesExt};
 
     object_formatter! {
+        #[target(Cursor<Vec<u8>>)]
         O {
             0; a: i32,
             1; b: i64
@@ -178,6 +186,7 @@ mod tests {
     }
 
     object_formatter! {
+        #[target(Cursor<Vec<u8>>)]
         O2 {
             0; a: i32,
             1; b: i64,
@@ -193,6 +202,7 @@ mod tests {
     }
 
     struct_formatter! {
+        #[target(Cursor<Vec<u8>>)]
         S {
             a: i32,
             b: i64

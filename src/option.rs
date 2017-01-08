@@ -1,7 +1,9 @@
 #[macro_export]
 macro_rules! option_formatter {
-    ($($name:ident)*) => ($(
-        impl<R> Formatter<Option<$name>> for R where R: Seek + ReadBytesExt + WriteBytesExt {
+    (#[target($buffer:ty)]
+    $name:ident
+    ) => (
+        impl Formatter<Option<$name>> for $buffer {
 
             fn serialize(&mut self, offset: u64, value: Option<$name>) -> ZeroFormatterResult<i32> {
                 try!(self.seek(SeekFrom::Start(offset)));
@@ -29,5 +31,5 @@ macro_rules! option_formatter {
                 }
             }
         }
-    )*)
+    )
 }

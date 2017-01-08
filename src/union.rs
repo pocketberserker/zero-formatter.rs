@@ -1,6 +1,7 @@
 #[macro_export]
 macro_rules! union_formatter {
-    (enum $name:ident : $key_type:ty {
+    (#[target($buffer:ty)]
+    enum $name:ident : $key_type:ty {
         $($key_value:expr; $case_name:ident($field_type:ty)),*
     }) => {
         #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -8,7 +9,7 @@ macro_rules! union_formatter {
             $($case_name($field_type)),*
         }
 
-        impl<R> Formatter<$name> for R where R: Seek + ReadBytesExt + WriteBytesExt {
+        impl Formatter<$name> for $buffer {
 
             fn serialize(&mut self, offset: u64, value: $name) -> ZeroFormatterResult<i32> {
                 let mut byte_size: i32 = 4;
@@ -44,7 +45,10 @@ macro_rules! union_formatter {
             }
         }
 
-        option_formatter! { $name }
+        option_formatter! {
+            #[target($buffer)]
+            $name
+        }
     }
 }
 
@@ -56,21 +60,23 @@ mod tests {
     use error::*;
     use formatter::*;
     use util;
-    use byteorder::{ReadBytesExt, WriteBytesExt};
 
     object_formatter! {
+        #[target(Cursor<Vec<u8>>)]
         O {
             0; a: i32
         }
     }
 
     struct_formatter! {
+        #[target(Cursor<Vec<u8>>)]
         S {
             b: i64
         }
     }
 
     union_formatter! {
+        #[target(Cursor<Vec<u8>>)]
         enum U: i32 {
             1; A(O),
             2; B(S)

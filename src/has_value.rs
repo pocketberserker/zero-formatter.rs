@@ -6,38 +6,42 @@ use byteorder::{ReadBytesExt, WriteBytesExt};
 use chrono::{UTC, DateTime};
 use std::time::Duration;
 
-#[macro_export]
-macro_rules! has_value_formatter {
+macro_rules! method_impl {
+    ($t:ty) => (
+        fn serialize(&mut self, offset: u64, value: Option<$t>) -> ZeroFormatterResult<i32> {
+            match value {
+                None => {
+                    self.serialize(offset, false)
+                },
+                Some(v) => {
+                    let r1 = try!(self.serialize(offset, true));
+                    let r2 = try!(self.serialize(offset + 1, v));
+                    Ok(r1 + r2)
+                }
+            }
+        }
+
+        fn deserialize(&mut self, offset: &mut u64) -> ZeroFormatterResult<Option<$t>> {
+            let has_value: bool = try!(self.deserialize(offset));
+            if has_value {
+                self.deserialize(offset).map(|v| Some(v))
+            }
+            else {
+                Ok(None)
+            }
+        }
+    )
+}
+
+macro_rules! primitive_has_value_formatter {
     ($($t:ty),*) => ($(
         impl<R> Formatter<Option<$t>> for R where R: Seek + ReadBytesExt + WriteBytesExt {
-
-            fn serialize(&mut self, offset: u64, value: Option<$t>) -> ZeroFormatterResult<i32> {
-                match value {
-                    None => {
-                        self.serialize(offset, false)
-                    },
-                    Some(v) => {
-                        let r1 = try!(self.serialize(offset, true));
-                        let r2 = try!(self.serialize(offset + 1, v));
-                        Ok(r1 + r2)
-                    }
-                }
-            }
-
-            fn deserialize(&mut self, offset: &mut u64) -> ZeroFormatterResult<Option<$t>> {
-                let has_value: bool = try!(self.deserialize(offset));
-                if has_value {
-                    self.deserialize(offset).map(|v| Some(v))
-                }
-                else {
-                    Ok(None)
-                }
-            }
+            method_impl! { $t }
         }
     )*)
 }
 
-has_value_formatter! {
+primitive_has_value_formatter! {
     u8,
     u16,
     u32,
@@ -51,6 +55,17 @@ has_value_formatter! {
     bool,
     DateTime<UTC>,
     Duration
+}
+
+#[macro_export]
+macro_rules! has_value_formatter {
+    (#[target($buffer:ty)]
+    $t:ty
+    ) => (
+        impl Formatter<Option<$t>> for $buffer {
+            method_impl! { $t }
+        }
+    )
 }
 
 #[cfg(test)]

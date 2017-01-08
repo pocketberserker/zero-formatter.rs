@@ -52,7 +52,6 @@ mod tests {
     use error::*;
     use formatter::*;
     use util;
-    use byteorder::{ReadBytesExt, WriteBytesExt};
 
     #[test]
     fn serialize_vec() {
@@ -71,6 +70,7 @@ mod tests {
     }
 
     struct_formatter! {
+        #[target(Cursor<Vec<u8>>)]
         S {
             a: i32
         }
@@ -93,6 +93,7 @@ mod tests {
     }
 
     object_formatter! {
+        #[target(Cursor<Vec<u8>>)]
         O {
             0; a: i32
         }
