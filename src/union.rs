@@ -29,7 +29,7 @@ macro_rules! union_formatter {
 
             fn deserialize(&mut self, offset: &mut u64) -> ZeroFormatterResult<$name> {
 
-                *offset += 4;
+                try!(util::check_non_null(self, offset));
 
                 let key: $key_type = try!(self.deserialize(offset));
                 match key {
@@ -55,6 +55,7 @@ mod tests {
     use std::io::{Seek, SeekFrom};
     use error::*;
     use formatter::*;
+    use util;
     use byteorder::{ReadBytesExt, WriteBytesExt};
 
     object_formatter! {

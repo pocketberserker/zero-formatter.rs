@@ -4,8 +4,11 @@ extern crate chrono;
 mod error;
 mod formatter;
 mod primitive;
+pub mod util;
 #[macro_use]
 mod has_value;
+#[macro_use]
+mod option;
 #[macro_use]
 mod object;
 mod time;

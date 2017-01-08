@@ -1,5 +1,6 @@
 use error::*;
 use formatter::*;
+use util;
 
 use std::io::Seek;
 use byteorder::{ReadBytesExt, WriteBytesExt};
@@ -35,7 +36,7 @@ impl<'a, R, A: Clone> Formatter<Cow<'a, [A]>> for R
     }
 
     fn deserialize(&mut self, offset: &mut u64) -> ZeroFormatterResult<Cow<'a, [A]>> {
-        let l: i32 = try!(self.deserialize(offset));
+        let l: i32 = try!(util::check_non_null(self, offset));
         let mut v: Vec<A> = Vec::with_capacity(l as usize);
         try!(try_deserialize(self, l - 1, &mut v, offset));
         Ok(Cow::from(v))
@@ -50,6 +51,7 @@ mod tests {
     use std::io::{Seek, SeekFrom};
     use error::*;
     use formatter::*;
+    use util;
     use byteorder::{ReadBytesExt, WriteBytesExt};
 
     #[test]

@@ -1,5 +1,6 @@
 use error::*;
 use formatter::*;
+use util;
 
 use std::{i32, usize};
 use std::borrow::Cow;
@@ -101,7 +102,7 @@ impl<'a, R> Formatter<Cow<'a, str>> for R where R: Seek + ReadBytesExt + WriteBy
     }
 
     fn deserialize(&mut self, offset: &mut u64) -> ZeroFormatterResult<Cow<'a, str>> {
-        let i: i32 = try!(self.deserialize(offset));
+        let i: i32 = try!(util::check_non_null(self, offset));
         //let l = try!(usize::try_from(i));
         let l = i as usize;
         let mut buf = Vec::with_capacity(l);
