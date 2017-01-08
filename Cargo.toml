@@ -1,5 +1,5 @@
 [package]
-name = "zero_formatter"
+name = "zero-formatter"
 version = "0.0.1"
 authors = ["pocketberserker <pocketberserker@gmail.com>"]
 description = "ZeroFormatter implementation for Rust"
