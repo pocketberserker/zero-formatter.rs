@@ -6,7 +6,8 @@ use byteorder::{ReadBytesExt, WriteBytesExt};
 use chrono::{UTC, DateTime};
 use std::time::Duration;
 
-macro_rules! method_impl {
+#[macro_export]
+macro_rules! has_value_formatter_methods {
     ($t:ty) => (
         fn serialize(&mut self, offset: u64, value: Option<$t>) -> ZeroFormatterResult<i32> {
             match value {
@@ -36,7 +37,7 @@ macro_rules! method_impl {
 macro_rules! primitive_has_value_formatter {
     ($($t:ty),*) => ($(
         impl<R> Formatter<Option<$t>> for R where R: Seek + ReadBytesExt + WriteBytesExt {
-            method_impl! { $t }
+            has_value_formatter_methods! { $t }
         }
     )*)
 }
@@ -63,7 +64,7 @@ macro_rules! has_value_formatter {
     $t:ty
     ) => (
         impl Formatter<Option<$t>> for $buffer {
-            method_impl! { $t }
+            has_value_formatter_methods! { $t }
         }
     )
 }
