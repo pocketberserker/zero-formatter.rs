@@ -1,3 +1,52 @@
+/// `union_formatter` define struct type and provide formatter.
+///
+/// ```
+/// # #[macro_use] extern crate zero_formatter;
+/// # extern crate byteorder;
+/// # use zero_formatter::*;
+/// # use std::io::{Seek, SeekFrom, Read, Write, Cursor, Result};
+/// # use byteorder::{ReadBytesExt, WriteBytesExt};
+/// #
+/// # declare_buffer! { Buffer }
+/// #
+/// object_formatter! {
+///     #[target(Buffer<Cursor<Vec<u8>>>)]
+///     AObject {
+///         0; a: i32,
+///         1; b: i64
+///     }
+/// }
+///
+/// object_formatter! {
+///     #[target(Buffer<Cursor<Vec<u8>>>)]
+///     OtherObject {
+///         0; c: i32,
+///         1; d: i64
+///     }
+/// }
+///
+/// union_formatter! {
+///     #[target(Buffer<Cursor<Vec<u8>>>)]
+///     enum UnionSample: i32 {
+///         0; A(AObject),
+///         1; Other(OtherObject)
+///     }
+/// }
+///
+/// # fn example() -> Result<()> {
+/// # let mut writer = Buffer::new(Cursor::new(Vec::new()));
+/// let a: UnionSample = UnionSample::A(AObject { a: 1, b: 2 });
+/// try!(writer.serialize(0, a));
+/// let other: UnionSample = UnionSample::Other(OtherObject { c: 3, d: 4 });
+/// try!(writer.serialize(0, other));
+/// # Ok(())
+/// # }
+/// #
+/// # fn main() {
+/// # example();
+/// # }
+/// ```
+
 #[macro_export]
 macro_rules! union_formatter {
     (#[target($buffer:ty)]

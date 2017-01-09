@@ -4,6 +4,36 @@ use formatter::*;
 use std::io::Seek;
 use byteorder::{ReadBytesExt, WriteBytesExt};
 
+/// `struct_formatter` define sturct type and provide sequential fields formatter.
+/// But, `struct_formatter` does not support [versioning](https://github.com/neuecc/ZeroFormatter/tree/1.6.0#versioning).
+///
+/// ```
+/// # #[macro_use] extern crate zero_formatter;
+/// # extern crate byteorder;
+/// # use zero_formatter::*;
+/// # use std::io::{Seek, SeekFrom, Read, Write, Cursor, Result};
+/// # use byteorder::{ReadBytesExt, WriteBytesExt};
+/// #
+/// # declare_buffer! { Buffer }
+/// #
+/// struct_formatter! {
+///     #[target(Buffer<Cursor<Vec<u8>>>)]
+///     StructSample {
+///         a: i32,
+///         b: i64
+///     }
+/// }
+///
+/// # fn example() -> Result<()> {
+/// # let mut writer = Buffer::new(Cursor::new(Vec::new()));
+/// try!(writer.serialize(0, StructSample { a: 1, b: 2 }));
+/// # Ok(())
+/// # }
+/// #
+/// # fn main() {
+/// # example();
+/// # }
+/// ```
 #[macro_export]
 macro_rules! struct_formatter {
     (#[target($buffer:ty)]
@@ -61,6 +91,36 @@ impl<R, A1, A2> Formatter<(A1, A2)> for R
     }
 }
 
+/// `object_formatter` define struct type and provide formatter.
+/// `object_formatter` support [versioning](https://github.com/neuecc/ZeroFormatter/tree/1.6.0#versioning).
+///
+/// ```
+/// # #[macro_use] extern crate zero_formatter;
+/// # extern crate byteorder;
+/// # use zero_formatter::*;
+/// # use std::io::{Seek, SeekFrom, Read, Write, Cursor, Result};
+/// # use byteorder::{ReadBytesExt, WriteBytesExt};
+/// #
+/// # declare_buffer! { Buffer }
+/// #
+/// object_formatter! {
+///     #[target(Buffer<Cursor<Vec<u8>>>)]
+///     ObjectSample {
+///         0; a: i32,
+///         1; b: i64
+///     }
+/// }
+///
+/// # fn example() -> Result<()> {
+/// # let mut writer = Buffer::new(Cursor::new(Vec::new()));
+/// try!(writer.serialize(0, ObjectSample { a: 1, b: 2 }));
+/// # Ok(())
+/// # }
+/// #
+/// # fn main() {
+/// # example();
+/// # }
+/// ```
 #[macro_export]
 macro_rules! object_formatter {
     (#[target($buffer:ty)]
