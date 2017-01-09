@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `zero_formatter` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, zero_formatter">
+
+    <title>zero_formatter - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'></p><script>window.sidebarCurrent = {name: 'zero_formatter', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>zero_formatter</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-0' class='srclink' href='../src/zero_formatter/src/lib.rs.html#1-132' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Implementation of <a href="https://github.com/neuecc/ZeroFormatter">ZeroFormatter</a> in Rust.</p>
+
+<h2 id='usage' class='section-header'><a href='#usage'>Usage</a></h2>
+<p>Put this in your <code>Cargo.toml</code>:</p>
+
+<pre><code class="language-toml">[dependencies]
+zero-formatter = &quot;0.1&quot;
+</code></pre>
+
+<h2 id='examples' class='section-header'><a href='#examples'>Examples</a></h2>
+<pre class='rust rust-example-rendered'>
+<span class='attribute'>#[<span class='ident'>macro_use</span>]</span> <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>zero_formatter</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>byteorder</span>;
+<span class='kw'>use</span> <span class='ident'>zero_formatter</span>::<span class='op'>*</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::{<span class='ident'>Seek</span>, <span class='ident'>SeekFrom</span>, <span class='ident'>Read</span>, <span class='ident'>Write</span>, <span class='ident'>Cursor</span>, <span class='prelude-ty'>Result</span>};
+<span class='kw'>use</span> <span class='ident'>byteorder</span>::{<span class='ident'>ReadBytesExt</span>, <span class='ident'>WriteBytesExt</span>};
+
+<span class='macro'>declare_buffer</span><span class='macro'>!</span> { <span class='ident'>Buffer</span> }
+
+<span class='macro'>object_formatter</span><span class='macro'>!</span> {
+    <span class='attribute'>#[<span class='ident'>target</span>(<span class='ident'>Buffer</span><span class='op'>&lt;</span><span class='ident'>Cursor</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>)]</span>
+    <span class='ident'>ObjectSample</span> {
+        <span class='number'>0</span>; <span class='ident'>a</span>: <span class='ident'>i32</span>,
+        <span class='number'>1</span>; <span class='ident'>b</span>: <span class='ident'>i64</span>
+    }
+}
+
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>writer</span> <span class='op'>=</span> <span class='ident'>Buffer</span>::<span class='ident'>new</span>(<span class='ident'>Cursor</span>::<span class='ident'>new</span>(<span class='ident'>Vec</span>::<span class='ident'>new</span>()));
+<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>writer</span>.<span class='ident'>serialize</span>(<span class='number'>0</span>, <span class='ident'>ObjectSample</span> { <span class='ident'>a</span>: <span class='number'>1</span>, <span class='ident'>b</span>: <span class='number'>2</span> }));</pre>
+
+<h2 id='supported-type' class='section-header'><a href='#supported-type'>Supported Type</a></h2>
+<p>Currently, this library support only <a href="https://github.com/neuecc/ZeroFormatter/tree/1.6.0#cross-platform">Stage1</a>.
+See also <a href="https://github.com/neuecc/ZeroFormatter/tree/1.6.0#wireformat-specification">WireFormat Specification</a>.</p>
+
+<h3 id='primitive-format' class='section-header'><a href='#primitive-format'>Primitive Format</a></h3>
+<table>
+<thead>
+<tr>
+<th>Rust</th>
+<th>C#</th>
+<th>Note</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>i16</code></td>
+<td><code>Int16</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>i32</code></td>
+<td><code>Int32</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>i64</code></td>
+<td><code>Int64</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>u16</code></td>
+<td><code>UInt16</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>u32</code></td>
+<td><code>UInt32</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>u64</code></td>
+<td><code>UInt64</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>f32</code></td>
+<td><code>Single</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>f64</code></td>
+<td><code>Double</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>bool</code></td>
+<td><code>Boolean</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>u8</code></td>
+<td><code>Byte</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>i8</code></td>
+<td><code>SByte</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>time::Duration</code></td>
+<td><code>TimeSpan</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>chrono::DateTime&lt;chrono::UTC&gt;</code></td>
+<td><code>DateTime</code></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td><code>DateTimeOffset</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>Cow&lt;&#39;a, str&gt;</code></td>
+<td><code>String</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>Option&lt;i16&gt;</code></td>
+<td><code>Int16?</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>Option&lt;i32&gt;</code></td>
+<td><code>Int32?</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>Option&lt;i64&gt;</code></td>
+<td><code>Int64?</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>Option&lt;u16&gt;</code></td>
+<td><code>UInt16?</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>Option&lt;u32&gt;</code></td>
+<td><code>UInt32?</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>Option&lt;u64&gt;</code></td>
+<td><code>UInt64?</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>Option&lt;f32&gt;</code></td>
+<td><code>Single?</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>Option&lt;f64&gt;</code></td>
+<td><code>Double?</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>Option&lt;bool&gt;</code></td>
+<td><code>Boolean?</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>Option&lt;u8&gt;</code></td>
+<td><code>Byte?</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>Option&lt;i8&gt;</code></td>
+<td><code>SByte?</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>Option&lt;time::Duration&gt;</code></td>
+<td><code>TimeSpan?</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>Option&lt;chrono::DateTime&lt;chrono::UTC&gt;&gt;</code></td>
+<td><code>DateTime?</code></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td><code>DateTimeOffset?</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id='sequence-format' class='section-header'><a href='#sequence-format'>Sequence Format</a></h3>
+<table>
+<thead>
+<tr>
+<th>Rust</th>
+<th>C#</th>
+<th>Note</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>Cow&lt;&#39;a, [T]&gt;</code></td>
+<td><code>Sequence&lt;T&gt;</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id='list-format' class='section-header'><a href='#list-format'>List Format</a></h3>
+<table>
+<thead>
+<tr>
+<th>Rust</th>
+<th>C#</th>
+<th>Note</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td></td>
+<td>FixedSizeList</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>VariableSizeList</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id='object-format' class='section-header'><a href='#object-format'>Object Format</a></h3>
+<table>
+<thead>
+<tr>
+<th>Rust</th>
+<th>C#</th>
+<th>Note</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>struct</td>
+<td>Object</td>
+<td>use <code>object_formatter</code> macro</td>
+</tr>
+<tr>
+<td><code>Option&lt;struct&gt;</code></td>
+<td>Object</td>
+<td>if byteSize = -1, indicates <code>None</code></td>
+</tr>
+<tr>
+<td>struct</td>
+<td>Struct</td>
+<td></td>
+</tr>
+<tr>
+<td><code>Option&lt;struct&gt;</code></td>
+<td>Struct?</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id='union-format' class='section-header'><a href='#union-format'>Union Format</a></h3>
+<table>
+<thead>
+<tr>
+<th>Rust</th>
+<th>C#</th>
+<th>Note</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>enum</td>
+<td>Union</td>
+<td>use <code>union_formatter</code> macro</td>
+</tr>
+<tr>
+<td>Option<enum></td>
+<td></td>
+<td>if byte_size = 1, indicates <code>None</code></td>
+</tr>
+</tbody>
+</table>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='mod' href='util/index.html'
+                                  title='zero_formatter::util'>util</a></td>
+                           <td class='docblock-short'>
+                                
+                           </td>
+                       </tr></table><h2 id='macros' class='section-header'><a href="#macros">Macros</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='macro' href='macro.declare_buffer.html'
+                                  title='zero_formatter::declare_buffer'>declare_buffer</a></td>
+                           <td class='docblock-short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='macro' href='macro.has_value_formatter.html'
+                                  title='zero_formatter::has_value_formatter'>has_value_formatter</a></td>
+                           <td class='docblock-short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='macro' href='macro.has_value_formatter_methods.html'
+                                  title='zero_formatter::has_value_formatter_methods'>has_value_formatter_methods</a></td>
+                           <td class='docblock-short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='macro' href='macro.object_formatter.html'
+                                  title='zero_formatter::object_formatter'>object_formatter</a></td>
+                           <td class='docblock-short'>
+                                <p><code>object_formatter</code> define struct type and provide formatter.
+<code>object_formatter</code> support <a href="https://github.com/neuecc/ZeroFormatter/tree/1.6.0#versioning">versioning</a>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='macro' href='macro.option_formatter.html'
+                                  title='zero_formatter::option_formatter'>option_formatter</a></td>
+                           <td class='docblock-short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='macro' href='macro.struct_formatter.html'
+                                  title='zero_formatter::struct_formatter'>struct_formatter</a></td>
+                           <td class='docblock-short'>
+                                <p><code>struct_formatter</code> define sturct type and provide sequential fields formatter.
+But, <code>struct_formatter</code> does not support <a href="https://github.com/neuecc/ZeroFormatter/tree/1.6.0#versioning">versioning</a>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='macro' href='macro.union_formatter.html'
+                                  title='zero_formatter::union_formatter'>union_formatter</a></td>
+                           <td class='docblock-short'>
+                                <p><code>union_formatter</code> define struct type and provide formatter.</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.ZeroFormatterError.html'
+                                  title='zero_formatter::ZeroFormatterError'>ZeroFormatterError</a></td>
+                           <td class='docblock-short'>
+                                
+                           </td>
+                       </tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.Formatter.html'
+                                  title='zero_formatter::Formatter'>Formatter</a></td>
+                           <td class='docblock-short'>
+                                <p>Formatter provide serializer and deserializer for ZeroFormatter.</p>
+                           </td>
+                       </tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='type' href='type.ZeroFormatterResult.html'
+                                  title='zero_formatter::ZeroFormatterResult'>ZeroFormatterResult</a></td>
+                           <td class='docblock-short'>
+                                
+                           </td>
+                       </tr></table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "zero_formatter";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>
