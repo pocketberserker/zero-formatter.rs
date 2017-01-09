@@ -5,3 +5,5 @@
 
 implementation of [ZeroFormatter](https://github.com/neuecc/ZeroFormatter) in Rust.
 
+[Documentation](https://pocketberserker.github.io/zero-formatter.rs/)
+
