@@ -99,6 +99,7 @@
 //! | `Option<struct>` | Object | if byteSize = -1, indicates `None` |
 //! | struct | Struct | |
 //! | `Option<struct>` | Struct? | |
+//! | `Option<(A1, A2)>` | Tuple<A1, A2> | |
 //!
 //! ### Union Format
 //!

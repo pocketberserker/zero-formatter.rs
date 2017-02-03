@@ -91,6 +91,37 @@ impl<R, A1, A2> Formatter<(A1, A2)> for R
     }
 }
 
+impl<R, A1, A2> Formatter<Option<(A1, A2)>> for R
+    where R: Seek + ReadBytesExt + WriteBytesExt + Formatter<A1> + Formatter<A2> {
+
+    fn serialize(&mut self, offset: u64, value: Option<(A1, A2)>) -> ZeroFormatterResult<i32> {
+        match value {
+            None => {
+                self.serialize(offset, false)
+            },
+            Some((v1, v2)) => {
+                let r0 = try!(self.serialize(offset, true));
+                let r1 = try!(self.serialize(offset + (r0 as u64), v1));
+                let r2 = try!(self.serialize(offset + ((r0 + r1) as u64), v2));
+                Ok(r0 + r1 + r2)
+            }
+        }
+    }
+
+    fn deserialize(&mut self, offset: &mut u64) -> ZeroFormatterResult<Option<(A1, A2)>> {
+
+        let has_value: bool = try!(self.deserialize(offset));
+        if has_value {
+            let a1: A1 = try!(self.deserialize(offset));
+            let a2: A2 = try!(self.deserialize(offset));
+            Ok(Some((a1, a2)))
+        }
+        else {
+            Ok(None)
+        }
+    }
+}
+
 /// `object_formatter` define struct type and provide formatter.
 /// `object_formatter` support [versioning](https://github.com/neuecc/ZeroFormatter/tree/1.6.0#versioning).
 ///
@@ -325,5 +356,19 @@ mod tests {
         let mut rdr = Cursor::new(vec![1, 2]);
         let mut offset = 0;
         assert_eq!((1u8, 2u8), rdr.deserialize(&mut offset).unwrap());
+    }
+
+    #[test]
+    fn serialize_some_2_tuple() {
+        let mut wtr = Cursor::new(Vec::new());
+        assert_eq!(wtr.serialize(0, Some((1u8, 2u8))).unwrap(), 3);
+        assert_eq!(wtr.into_inner(), vec![1, 1, 2]);
+    }
+
+    #[test]
+    fn deserialize_some_2_tuple() {
+        let mut rdr = Cursor::new(vec![1, 1, 2]);
+        let mut offset = 0;
+        assert_eq!(Some((1u8, 2u8)), rdr.deserialize(&mut offset).unwrap());
     }
 }
